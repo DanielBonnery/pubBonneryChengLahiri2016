@@ -1,103 +1,13 @@
 #library("CompositeRegressionEstimation)
 
-rm(list=ls())
-options(max.print=100,continue=" ")
-wd1<-"/home/daniel/Dropbox/CensusBAE/Composite_estimation/R/Computation of FR"
-wd2<-"C:/Documents and Settings/dbonnery/My Documents/Dropbox/CensusBAE/Composite_estimation/R/Computation of FR"
-wd3<-"H:/Travail/R_programs"
-wd4<-"/cpsbranch/temp/dbonnery"
-wd5<-"/afs/glue.umd.edu/home/glue/d/b/dbonnery/home/Composite/programmes"
-for(i in 1:5){if(file.exists(get(paste("wd",i,sep="")))){setwd(get(paste("wd",i,sep="")))}}
-PC=getwd()!=wd4
-wd1t<-wd1==getwd()
-wd2t<-wd2==getwd()
-wd3t<-wd3==getwd()
-wd4t<-wd4==getwd()
-wd5t<-wd5==getwd()
-
-if(PC){startingstep<-7}
-if(!PC){startingstep<-7}
-
-steps<-1:6>=startingstep
-names(steps)<-
-  c("Create package",
-    "Get data",
-    "Import, convert, and save data",
-    "Compute Calibration totals",
-    "Compute total estimates",
-    "Analysis")
-
-if(PC){nrep <- 1000}
-
-if(!PC|wd5t){
-  paste0<-function(...,collapse=NULL)
-  {paste(...,collapse=collapse,sep="")}
-}
-if(PC){
   progfolder<-getwd()
-  CREfolder<-paste0(getwd(),"/package/CRE/R")
+  CREfolder<-"../CompositeRegressionEstimation/R"
+  pubfolder<-"R"
   Resultsfolder<-"/home/daniel/R/Resultats"
   if(wd5t){Resultsfolder<-paste0(getwd(),"/../Resultats")}
   #Resultsfolder<-"/home/daniel/R/Ressauv"
   tablesfolder<-"/home/daniel/R/tables"
-  if(wd5t){tablesfolder<-paste0(getwd(),"/../tables")}}
-if(!PC){
-  progfolder<-"/home/b/bonne329/R_programs"
-  CREfolder<-"/home/b/bonne329/R_programs/package/cre/r"
-  Resultsfolder<-"/home/b/bonne329/R_programs/Resultats"
-  tablesfolder<-"/cpsbranch/temp/dbonnery"}
-wd<-getwd()
-#if(PC){load(".RData")}
-##-----------------------------------------------------------------
-#Create packages
-if(steps[1]){
-  if(wd %in%c(wd1,wd2)){
-    source(paste(getwd(),"0.creepackage.R",sep="/"))
-    generepaquet(getwd())}}
-##---------------------------------------------------------------
-#Load source files and packages
 
-
-usePackages <- function(p,...) {
-  if(wd5t){
-    if (!is.element(p, c(installed.packages()[,1],installed.packages(lib.loc="R/packages/")[,1]))){
-      install.packages(p,dep = TRUE,lib="R/packages/", ...)}
-    require(p, character.only = TRUE,lib="R/packages/")}
-  else{
-      if (!is.element(p, installed.packages()[,1])){
-        install.packages(p,dep = TRUE, ...)}
-      require(p, character.only = TRUE)}}
-if(!wd5t){usePackages('sampling')}
-if(PC&!wd5t){
-  usePackages("abind")
-  usePackages("optimx")
-  usePackages("Matrix")
-  usePackages("Hmisc")
-  usePackages("MASS")
-  require(multicore)
-  usePackages('filehash') 
-  usePackages('tikzDevice', repos='http://r-forge.r-project.org', type='source') 
-}
-#if(!wd5t){bdiag2<-function(nmonth,XX){as.matrix(.bdiag(lapply(1:nmonth,function(i){XX})))}}
-
-if(wd5t){
-  library("sampling")
-#  install.packages("abind",dep=TRUE,lib="R/packages")
-  library("abind",lib="R/packages/")
-  library("optimx")
-#  library("multicore")
-  library("Matrix")
-  library("Hmisc")
-  library("MASS")
-#  library('filehash') 
-bdiag2<-function(nmonth,XX){
-   n<-cbind(rep(nrow(XX),nmonth),rep(ncol(XX),nmonth));M<-matrix(0,sum(n[,1]),sum(n[,2]));
-   for(i in 1:nmonth){M[(c(0,cumsum(n[,1]))[i]+1):c(0,cumsum(n[,1]))[i+1],
-                           (c(0,cumsum(n[,2]))[i]+1):c(0,cumsum(n[,2]))[i+1]]<-XX;}
-                         M
-   }
-}
-if(!PC|wd5t){mclapply<-function(X, FUN,mc.cores=1, ...){lapply(X, FUN, ...)}}
 
 #List of tables
 startingyear<-2005
@@ -134,8 +44,8 @@ sapply(c("0.creepackage.R",
                   "3.1.functions_for_graphics.R",
                   "3.2.functions_for_analysis.R",
                   "3.3.functions_that_create_all_graphics.R")}else{character(0)}),
-       function(file){source(paste(progfolder,file,sep="/"));return(0)})
-for(f in c(list.files(path=CREfolder,pattern="\\.R$"),list.files(path=CREfolder,pattern="\\.r$"))){
+       function(file){source(paste("../CompositeRegressionEstimation/R",file,sep="/"));return(0)})
+for(f in c(list.files(path=pubfolder,pattern="\\.R$"),list.files(path=pubfolder,pattern="\\.r$"))){
   print(f)
   if(!is.element(tolower(f),tolower(c("CRE-internal.R","CRE-Ex.R")))){
     source(paste(CREfolder,f,sep="/"))}}
@@ -147,18 +57,10 @@ nmois <- length(tables.entree)
 nmonth<-nmois
 ##----------------------------------------------------------------
 #Get or creation of tables
-if(steps[2]){
-  if(PC){
-    Createfalsetables(tables.entree)
-    Getweb()
-  }
-  if(!PC){
-    system(" cd ~/SAS_programs/;sas CopyTables.sas")
-  }}
+Createfalsetables(tables.entree)
+
 ##----------------------------------------------------------------
 #Load tables in R
-if(steps[3]){
-  if(PC){
     list.tablespop<-mclapply(paste0(tablesfolder,"/",tables.entree,"_pop.csv"),read.csv)
     list.tablespop<-Chargetablespop(list.tablespop)
     names(list.tablespop)<-tables.entree
@@ -182,29 +84,19 @@ if(steps[3]){
     save(list.tables,file=paste0(tablesfolder,"/list.tablesweb.Rdata"))
     #list.tablesregroup <- Regroupe(list.tables,"hwniwgt")
     #save(list.tablesregroup,file=paste0(tablesfolder,"/list.tablesegroupweb.Rdata"))
-  }
-  if(!PC){
-    list.tablesbrut<-Importesas(wd,tables.entree)
+
+        list.tablesbrut<-Importesas(wd,tables.entree)
     list.tables<-Chargetables(list.tablesbrut)
     save(list.tables,file=paste0(tablesfolder,"/list.tablesserv.Rdata"))
     #    list.tablesregroup <- Regroupe(list.tables,"hwniwgt")
     #   save(list.tablesregroup,file=paste0(tablesfolder,"/list.tablesregroupserv.Rdata"))}
     rm(list.tables)    
     #rm(list.tablesregroup)
-  }}
-##----------------------------------------------------------------
+  
 #Launch computations
-if(steps[4]||steps[5]){
-  if(PC){typetable<-c("simu","web")}
-  if(!PC){typetable<-c("serv")}
-  pcserv="web"
-  pcserv="serv"
+typetable<-c("simu")
   pcserv="simu"
-  for(pcserv in typetable){
-    print(paste0("Compute auxiliary totals for ",pcserv))
-    simu<-pcserv=="simu"
-    web <-pcserv=="web"
-    load(paste0(tablesfolder,"/list.tables",pcserv,".Rdata"))
+    load(paste0(tablesfolder,"/list.tablessimu.Rdata"))
     computemistotals(list.tables)
     
     if(steps[4]){  
