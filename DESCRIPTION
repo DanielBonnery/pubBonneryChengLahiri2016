@@ -14,7 +14,6 @@ Imports: ggplot2,
 	filehash
 Suggests: 
 Description: Data
-Remotes: DanielBonnery/CompositeRegressionEstimation
 License: GPL (>= 2)
 LazyLoad: yes
 LazyData: true
