@@ -1,4 +1,4 @@
-Package: pubBonneryChengLahiri2016_1
+Package: pubBonneryChengLahiri2016
 Type: Package
 Title: X
 Version: 1.0 
@@ -14,6 +14,7 @@ Imports: ggplot2,
 	filehash
 Suggests: 
 Description: Data
+Remotes: DanielBonnery/CompositeRegressionEstimation
 License: GPL (>= 2)
 LazyLoad: yes
 LazyData: true
