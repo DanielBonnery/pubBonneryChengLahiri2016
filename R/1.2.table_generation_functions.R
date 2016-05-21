@@ -19,15 +19,15 @@ changevar<-function(varr,prob2,prob,toujourslesmemes=1){
   rectif(var2,prob)}
 
 
-Createfalsetables<-function(Total=NULL,
+Createfalsetables<-function(Totals=NULL,
                             L=if(is.null(Total)){85}else{
-                              if(!is.null(names(Total)[[1]])){names(Total)[[1]]}else{dim(Totals)[[1]]}},
+                              if(!is.null(names(Totals)[[1]])){names(Totals)[[1]]}else{dim(Totals)[[1]]}},
                             cluster.size=5,
                             cluster.all.sample.rate=1/10,
                             cluster.single.sample.size=20,
                             seed=1){
   if(length(L)==1&is.integer(L)){L=1:L}
-  if(is.null(Total)){Total=plyr::aaply(L,1,function(x){y=runif(3);y/sum(y)})}
+  if(is.null(Totals)){Totals=plyr::aaply(L,1,function(x){y=runif(3);y/sum(y)})}
   
   nb.samples<-L+15
   cluster.single.sample.rate <-cluster.all.sample.rate/nb.samples
