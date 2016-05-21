@@ -1,3 +1,4 @@
+downloadmicro_data<-function(){
 startingyear<-2005
 currentyear<-2013
 startingmonth<-1
@@ -173,4 +174,5 @@ conn <- dbConnect(SQLite() , paste(dpath,cps.dbname,sep="/"))
 dbRemoveTable(conn,"nov05cps")
 dbWriteTable(conn, "nov05cps", nov05cps)
 dbDisconnect(conn)
+}
 }

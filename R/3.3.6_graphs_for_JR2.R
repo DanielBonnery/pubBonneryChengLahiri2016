@@ -1,4 +1,4 @@
-load("replications.Rdata")
+if(FALSE){load("replications.Rdata")
   Recap<-abind(Recap,
                array(
                  apply(Recap[,,,"mse"],3,function(x){x/Recap[,,"S2","mse"]}),
@@ -39,3 +39,4 @@ load("replications.Rdata")
       "/home/daniel/Dropbox/CensusBAE/Composite estimation/Survey methodology/Article/Rao comments/allgraphs2.tex")
   
 
+}

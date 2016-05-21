@@ -1,4 +1,5 @@
-graphdirectory<-"/home/daniel/Dropbox/CensusBAE/Composite_estimation/Articles/An Evaluation of Different Composite Estimators Using the Current Population Survey Data/Article/Second submission/graphs"
+if(FALSE){
+  graphdirectory<-"/home/daniel/Dropbox/CensusBAE/Composite_estimation/Articles/An Evaluation of Different Composite Estimators Using the Current Population Survey Data/Article/Second submission/graphs"
 charge("resultatsserv")
 load(paste0("replications.Rdata"))
 
@@ -445,3 +446,4 @@ sapply(1:3,function(i){
          #ltye=rep(1,4),
          printlabels=TTRUE[i])})  
 dev.off()
+}

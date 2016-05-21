@@ -1,4 +1,4 @@
-ledir<-"~/Dropbox/CensusBAE/Composite_estimation/Conferences/20140807_JSM_Boston/Presentacion/graphs"
+if(FALSE){ledir<-"~/Dropbox/CensusBAE/Composite_estimation/Conferences/20140807_JSM_Boston/Presentacion/graphs"
 load("replications.Rdata")
 charge("resultatsserv")
 
@@ -58,3 +58,4 @@ graphs(Estimatesdiff[,"unemployment",c("AK","S2","MRR1","BCL23")],xref=Estimates
        ylabe="(b) Change")
 
 dev.off()
+}

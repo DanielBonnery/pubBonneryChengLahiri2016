@@ -1,4 +1,5 @@
-ledir<-"~/../Dropbox/Travail/Recherche/Présentations/201408_Yang/graphs"
+if(FALSE){
+  ledir<-"~/../Dropbox/Travail/Recherche/Présentations/201408_Yang/graphs"
 ledir<-"~/Dropbox/Travail/Recherche/Présentations/201408_Yang/graphs"
 load("replications.Rdata")
 
@@ -53,3 +54,4 @@ graphs(Estimatesdiff[,"unemployment",c("AK","S2","MRR1")],xref=Estimatesdiff[,"u
        ylabe="(b) Change")
 
 dev.off()
+}

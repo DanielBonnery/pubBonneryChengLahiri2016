@@ -1,4 +1,4 @@
-#Graphs for 20140525
+if(FALSE){#Graphs for 20140525
 
 load("replications.Rdata")
 #default<-c("S2" ,  "AK2_papa0.5-0.5","MRR0.95","MRR1","MRR01")
@@ -221,3 +221,4 @@ charge("resultatsserv")
 graphs(Estimates[,"unemployment",c("AK","S2","MRR0.95")],xref=Estimates[,"unemployment",c("S2")],text="true")
 #graphs(Estimatesdiff[,"unemployment",c("AK","S2","MRR0.95")],xref=Estimatesdiff[,"unemployment",c("S2")])
 graphs(Estimatesdiff[,"unemployment",c("AK","S2","MRR0.95")],xref=Estimatesdiff[,"unemployment",c("S2")],text="truediff")
+}

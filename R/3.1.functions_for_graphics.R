@@ -1,3 +1,4 @@
+functionsforgraphics<-function(){
 #--------------------------------------------------------------
 #Fonction qui crée un graphique
 sauvegraph <- function(texte,pres=prese,mare=c(3,3,0,0),
@@ -100,4 +101,4 @@ graphs <- function(XX,sel=NULL,xref=0,texte="",pres=prese,
   sapply(1:nvar,function(i){points(1:nmois,XX[,i],col=colore[i],type="l",lty=ltye[i],lwd=lwde[i])})
   if(!is.null(addgraph)){eval(parse(text=addgraph))}
   if(texte!=""){dev.off()}
-}
+}}

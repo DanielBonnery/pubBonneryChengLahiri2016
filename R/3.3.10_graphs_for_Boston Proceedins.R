@@ -1,4 +1,5 @@
-graphdirectory<-"/home/daniel/Dropbox/CensusBAE/Composite_estimation/Articles/Model-assisted_estimation_of_unemployment_rates_for_longitudinal_surveys_with_an_application_in_the_Current_Population_Survey/JSM proceedings/graphs"
+if(FALSE){
+  graphdirectory<-"/home/daniel/Dropbox/CensusBAE/Composite_estimation/Articles/Model-assisted_estimation_of_unemployment_rates_for_longitudinal_surveys_with_an_application_in_the_Current_Population_Survey/JSM proceedings/graphs"
 charge("resultatsserv")
 
 #########################################################################
@@ -141,3 +142,4 @@ cat(latexcode,file=paste0(graphdirectory,"/table4.tex"))
 
 
 
+}

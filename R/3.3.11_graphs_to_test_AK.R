@@ -1,4 +1,5 @@
-adde2="_1"
+if(FALSE){
+  adde2="_1"
 load(paste0("replications.Rdata"))
 posAK=dimnames(RecapA)[[3]][grep("AK",dimnames(RecapA)[[3]])]
 posAK
@@ -60,3 +61,4 @@ graphs(RecapA[,"unemployment","AK3_level","var",list.adde2])
 
 
 
+}

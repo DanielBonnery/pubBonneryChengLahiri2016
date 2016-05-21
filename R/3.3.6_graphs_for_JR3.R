@@ -1,4 +1,4 @@
-load("replications.Rdata")
+if(FALSE){load("replications.Rdata")
 Recap<-abind(Recap,
              array(
                apply(Recap[,,,"mse"],3,function(x){x/Recap[,,"S2","mse"]}),
@@ -79,3 +79,4 @@ zzz=c(4+56*(0:20),(16*56)+c(9,10,12,16,17,19,23,24,26))
 cat(paste(c(x,z),collapse="\n"),file=
     "/home/daniel/Dropbox/CensusBAE/Composite estimation/Articles/An Evaluation of Different Composite Estimators Using the Current Population Survey Data/Rticle/Rao comments/tables.tex")
 
+}
