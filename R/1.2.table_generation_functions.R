@@ -19,11 +19,12 @@ changevar<-function(varr,prob2,prob,toujourslesmemes=1){
   rectif(var2,prob)}
 
 
-Createfalsetables<-function(tables.entree){
+Createfalsetables<-function(tables.entree,
+                            cluster.size=5,
+                            cluster.all.sample.rate=1/10,
+                            cluster.single.sample.size=20,
+                            seed=1){
   nmois<-length(tables.entree)
-  cluster.size<-5
-  cluster.all.sample.rate <-1/10
-  cluster.single.sample.size<-20
   nb.samples<-nmois+15
   cluster.single.sample.rate <-cluster.all.sample.rate/nb.samples
   N<-cluster.size*
@@ -33,25 +34,19 @@ Createfalsetables<-function(tables.entree){
   
   nb.clusters<-N/cluster.size
   sample.rate<-8*cluster.single.sample.size/nb.clusters
+  set.seed(seed)
   
-  
-  set.seed(1)
-  load(paste(Resultsfolder,"/S2compserv.Rdata",sep=""),envir=.GlobalEnv)
-  charge("resultatsserv")
-  
-  #S2comp <- WScomp[c("T",listpumlr)]
   S2comprop <- Estimates[,listpumlrR,"S2"]
   S2comprop <- S2comprop/apply(S2comprop,1,sum)
   prob <- S2comprop[,listpumlrR]
   
   creevar<-function(nmod,prob=NULL){
     modal <- nmod
-    if( is.integer(nmod)){modal <- 1:nmod} 
+    if( is.integer(nmod)&length(nmod)==1){modal <- 1:nmod} 
     as.factor(sample(modal,N,replace=TRUE, prob=prob))}
   
-  creevarpumlr<-function(prob){
-    return(rep(listpumlrRmod,roundv(N,prob))[order(runif(N))])
-  }
+  creevarpumlr<-function(prob,N=100000){
+    return(rep(listpumlrRmod,roundv(N,prob))[order(runif(N))])}
   
   
   charge("doubbleserv")
@@ -65,7 +60,7 @@ Createfalsetables<-function(tables.entree){
     pumlrR   =creevarpumlr(prob[1,]),
     pumlrRlag   =creevarpumlr(prob[1,]))
   
-  sapply(1:3,function(j){
+  lapply(1:3,function(j){
     list.tablespop<-list(Popu)
     for (i in (2:nmois)){
       Popu<-data.frame(
@@ -75,11 +70,7 @@ Createfalsetables<-function(tables.entree){
         pumlrRlag   =Popu$pumlrR,
         pumlrR   =changevar(Popu$pumlrR,prob2[[i-1]],prob[i,],toujourslesmemes=j))
       list.tablespop<-c(list.tablespop,list(Popu))}
-    
-    names(list.tablespop)<-tables.entree
-    save(list.tablespop,file=paste0(tablesfolder,paste0("/list.tablespop",j,".Rdata")))})
-  
-}
+    list.tablespop})}
 
 pumlrR <- function(i){replace(x<-as.character(-1+2*is.element(i,c("1","2"))+is.element(i,as.character(3:4))),x=="-1","_1")}
 
@@ -93,27 +84,27 @@ pumlrR <- function(i){replace(x<-as.character(-1+2*is.element(i,c("1","2"))+is.e
 
 
 Chargetables <- function(list.tables){
-  L<-mclapply(list.tables,
-              function(dff){
-                names(dff)<-tolower(names(dff))
-                colnames<-intersect(tolower(c("GESTFIPS","PUMLR","HRMIS","puhhmem",
-                                              'prpertyp',"pumlrlag",
-                                              'pesex'   ,
-                                              'prwtrace', 
-                                              'pehspnon', 
-                                              'PRBLNONB', 
-                                              'GESTREC')),names(dff))
-                colnamesnum<-setdiff(tolower(names(dff)),colnames)
-                dff[colnamesnum] <- lapply(dff[colnamesnum] ,as.numeric)
-                dff[colnames] <- lapply(dff[colnames] ,as.factor)
-                dff<-transform(dff,pwsswgt=pwsswgt/10000)
-                dff<-transform(dff,pwcmpwgt=pwcmpwgt/10000)
-                if(is.element("hwniwgt",colnames)){dff<-transform(dff,hwniwgt=hwniwgt/10000)}
-                dff$pumlrR <- as.factor(pumlrR(dff$pumlr))
-                if(is.element("pumlrlag",names(dff))){dff$pumlrRlag <- as.factor(pumlrR(dff$pumlrlag))
-                }
-                #assign(tables.entree[[i]],dff, envir = .GlobalEnv)
-                return(dff)})
+  L<-lapply(list.tables,
+            function(dff){
+              names(dff)<-tolower(names(dff))
+              colnames<-intersect(tolower(c("GESTFIPS","PUMLR","HRMIS","puhhmem",
+                                            'prpertyp',"pumlrlag",
+                                            'pesex'   ,
+                                            'prwtrace', 
+                                            'pehspnon', 
+                                            'PRBLNONB', 
+                                            'GESTREC')),names(dff))
+              colnamesnum<-setdiff(tolower(names(dff)),colnames)
+              dff[colnamesnum] <- lapply(dff[colnamesnum] ,as.numeric)
+              dff[colnames] <- lapply(dff[colnames] ,as.factor)
+              dff<-transform(dff,pwsswgt=pwsswgt/10000)
+              dff<-transform(dff,pwcmpwgt=pwcmpwgt/10000)
+              if(is.element("hwniwgt",colnames)){dff<-transform(dff,hwniwgt=hwniwgt/10000)}
+              dff$pumlrR <- as.factor(pumlrR(dff$pumlr))
+              if(is.element("pumlrlag",names(dff))){dff$pumlrRlag <- as.factor(pumlrR(dff$pumlrlag))
+              }
+              #assign(tables.entree[[i]],dff, envir = .GlobalEnv)
+              return(dff)})
   names(L)<-names(list.tables)
   return(L)}
 #This function modify the dataframes of the list list.tablespop

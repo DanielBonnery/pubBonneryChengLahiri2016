@@ -1,54 +1,21 @@
 #library("CompositeRegressionEstimation)
-
-progfolder<-getwd()
-CREfolder<-"../CompositeRegressionEstimation/R"
-pubfolder<-"R"
-Resultsfolder<-"/home/daniel/R/Resultats"
-if(wd5t){Resultsfolder<-paste0(getwd(),"/../Resultats")}
-#Resultsfolder<-"/home/daniel/R/Ressauv"
-tablesfolder<-"/home/daniel/R/tables"
-
+library(pubBonneryChengLahiri2016)
 
 #List of tables
 startingyear<-2005
 startingmonth<-1
 currentyear<-2012
 currentmonth<-1
-listpumlrRmod <- c(0,1,"_1")
-listpumlrmod <- c(1:7,"_1")
+listpumlrRmod <- c(0,1,"_1")#factor(c("Unemployed","Employed","Not in the labor force"))
+listpumlrmod <- c(1:7,"_1"))#factor(c("Unemployed","Employed","Not in the labor force"))
 listpumlrR<-paste0("pumlrR_n",listpumlrRmod)
 listpumlr<-paste0("pumlr_n",listpumlrmod)
 studyvar<-c("unemployment",listpumlrR)
-adde2f<-function(bias,popnum){c(outer(paste0("_",bias),popnum,paste0))}
+#adde2f<-function(bias,popnum){c(outer(paste0("_",bias),popnum,paste0))}
 biass=c("","bias")
 popnums=1:3
-list.adde2<-adde2f(biass,popnums)
+list.adde2<-(function(bias,popnum){c(outer(paste0("_",bias),popnum,paste0))})(biass,popnums)
 
-
-
-sapply(c("0.creepackage.R",
-         "1.1.listetables.R",
-         "1.2.table_generation_functions.R",
-         "1.3.import_functions.R",
-         "1.4.loadtables.R",
-         if(!PC){"abind.r"}else{character(0)},
-         if(FALSE){"1.5.cpsmicrodatadownload.R"}else{character(0)},
-         "2.0.Functions_to_save_or_load_results.R",
-         "2.1.compute_total_estimates.R",
-         "2.1.1.estimatesigma.R",
-         if(PC){c("2.1.compute_total_estimates_on rep.R",
-                  "2.2.Functions_to_compute_employment_rates.R",
-                  "2.3.Compute_employment_rates_on_replications_functions.R",
-                  "2.4.Function_to_compute_employment_rates_on_true_data.R",
-                  "3.1.functions_for_graphics.R",
-                  "3.2.functions_for_analysis.R",
-                  "3.3.functions_that_create_all_graphics.R")}else{character(0)}),
-       function(file){source(paste("../CompositeRegressionEstimation/R",file,sep="/"));return(0)})
-for(f in c(list.files(path=pubfolder,pattern="\\.R$"),list.files(path=pubfolder,pattern="\\.r$"))){
-  print(f)
-  if(!is.element(tolower(f),tolower(c("CRE-internal.R","CRE-Ex.R")))){
-    source(paste(CREfolder,f,sep="/"))}}
-rm(f)
 ##----------------------------------------------------------------                                                                                                                                                                                                                                                              
 tables.entree<-lta(startingmonth,currentmonth,startingyear,currentyear)
 
@@ -56,7 +23,7 @@ nmois <- length(tables.entree)
 nmonth<-nmois
 ##----------------------------------------------------------------
 #Get or creation of tables
-Createfalsetables(tables.entree)
+Createfalsetables(tables.entree,Totals)
 
 ##----------------------------------------------------------------
 #Load tables in R
