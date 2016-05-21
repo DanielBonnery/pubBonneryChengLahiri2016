@@ -20,16 +20,16 @@ changevar<-function(varr,prob2,prob,toujourslesmemes=1){
 
 
 Createfalsetables<-function(Total=NULL,
-                            T=if(is.null(Total)){85}else{
+                            L=if(is.null(Total)){85}else{
                               if(!is.null(names(Total)[[1]])){names(Total)[[1]]}else{dim(Totals)[[1]]}},
                             cluster.size=5,
                             cluster.all.sample.rate=1/10,
                             cluster.single.sample.size=20,
                             seed=1){
-  if(length(T)==1!is.integer(T)){T=1:T}
-  if(is.null(Total)){Total=apply(plyr::aaply(T,function(x){y=runif(3))}
-  nmois<-length(tables.entree)
-  nb.samples<-nmois+15
+  if(length(L)==1&is.integer(L)){L=1:L}
+  if(is.null(Total)){Total=plyr::aaply(L,1,function(x){y=runif(3);y/sum(y)})}
+  
+  nb.samples<-L+15
   cluster.single.sample.rate <-cluster.all.sample.rate/nb.samples
   N<-cluster.size*
     cluster.single.sample.size/
@@ -40,10 +40,8 @@ Createfalsetables<-function(Total=NULL,
   sample.rate<-8*cluster.single.sample.size/nb.clusters
   set.seed(seed)
   
-  S2comprop <- Estimates[,listpumlrR,"S2"]
-  S2comprop <- S2comprop/apply(S2comprop,1,sum)
-  prob <- S2comprop[,listpumlrR]
-  
+  prob <- Totals/apply(Totals,1,sum)
+
   creevar<-function(nmod,prob=NULL){
     modal <- nmod
     if( is.integer(nmod)&length(nmod)==1){modal <- 1:nmod} 
@@ -66,7 +64,7 @@ Createfalsetables<-function(Total=NULL,
   
   lapply(1:3,function(j){
     list.tablespop<-list(Popu)
-    for (i in (2:nmois)){
+    for (i in (2:L)){
       Popu<-data.frame(
         hrlongid=Popu$hrlongid,
         pulineno=Popu$pulineno,

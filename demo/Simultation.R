@@ -15,7 +15,7 @@ startingmonth<-1
 currentyear<-2012
 currentmonth<-1
 listpumlrRmod <- c(0,1,"_1")#factor(c("Unemployed","Employed","Not in the labor force"))
-listpumlrmod <- c(1:7,"_1"))#factor(c("Unemployed","Employed","Not in the labor force"))
+listpumlrmod <- c(1:7,"_1")#factor(c("Unemployed","Employed","Not in the labor force"))
 listpumlrR<-paste0("pumlrR_n",listpumlrRmod)
 listpumlr<-paste0("pumlr_n",listpumlrmod)
 studyvar<-c("unemployment",listpumlrR)
@@ -31,7 +31,7 @@ nmois <- length(tables.entree)
 nmonth<-nmois
 ##----------------------------------------------------------------
 #Get or creation of tables
-Createfalsetables(Totals,N)
+Createfalsetables()
 
 ##----------------------------------------------------------------
 #Load tables in R
