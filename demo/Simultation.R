@@ -2,6 +2,14 @@
 library(pubBonneryChengLahiri2016)
 
 #List of tables
+allmonthsD<-seq(as.Date("20050101", "%Y%m%d"),
+                as.Date("20120101", "%Y%m%d"),
+                by="month")
+allmonths <- format(seq(as.Date("20050101", "%Y%m%d"),
+                       as.Date("20120101", "%Y%m%d"),
+                       by="month"), "%b%Y")
+allmonthsD2<-as.Date(paste0("01",allmonths),"%d%b%Y")
+
 startingyear<-2005
 startingmonth<-1
 currentyear<-2012
@@ -23,7 +31,7 @@ nmois <- length(tables.entree)
 nmonth<-nmois
 ##----------------------------------------------------------------
 #Get or creation of tables
-Createfalsetables(tables.entree,Totals)
+Createfalsetables(Totals,N)
 
 ##----------------------------------------------------------------
 #Load tables in R

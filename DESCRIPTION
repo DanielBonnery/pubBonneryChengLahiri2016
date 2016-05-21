@@ -11,7 +11,8 @@ Imports: ggplot2,
 	Matrix,
 	Hmisc,
 	MASS,
-	filehash
+	filehash,
+	plyr
 Suggests: 
 Description: Data
 Remotes: DanielBonnery/CompositeRegressionEstimation
