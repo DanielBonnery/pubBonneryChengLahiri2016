@@ -1,6 +1,5 @@
 #library("CompositeRegressionEstimation)
 library(pubBonneryChengLahiri2016)
-
 #List of tables
 allmonthsD<-seq(as.Date("20050101", "%Y%m%d"),
                 as.Date("20120101", "%Y%m%d"),
@@ -30,15 +29,9 @@ tables.entree<-lta(startingmonth,currentmonth,startingyear,currentyear)
 nmois <- length(tables.entree)
 nmonth<-nmois
 ##----------------------------------------------------------------
-#Get or creation of tables
-Createfalsetables()
-
-##----------------------------------------------------------------
-#Load tables in R
-list.tablespop<-mclapply(paste0(tablesfolder,"/",tables.entree,"_pop.csv"),read.csv)
-list.tablespop<-Chargetablespop(list.tablespop)
-names(list.tablespop)<-tables.entree
-save(list.tablespop,file=paste0(tablesfolder,"/list.tablespop.Rdata"))
+#Create synthetic datasets of tables
+syntheticpops<-syntheticdataset()
+#Create all possible samples
 
 load(paste0(tablesfolder,"/Toussamples.Rdata"))
 hrmis=as.factor(rep(8:1,each=100))

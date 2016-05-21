@@ -9,68 +9,69 @@ rectif<-function(varr,prob_1){
   remps<-substr(names(eff)[eff>0],9,11)
   varr[sample((1:N)[is.element(varr,qui)],sum(eff[eff>0]))]<-rep(remps,eff[eff>0])
   return(as.factor(varr))}
-changevar<-function(varr,prob2,prob,toujourslesmemes=1){
+changevar<-function(varr,prob2=NULL,prob,iterative.synthetic.model="Independent"){
   var2<-varr
   for(i in listpumlrRmod){
     n<-sum(varr==i)
-    if(toujourslesmemes==2){
+    if(iterative.synthetic.model==2){
       var2[varr==i]<-rep(listpumlrRmod,roundv(n,prob2[,i]))[order(runif(n))]}
-    if(toujourslesmemes==3){var2[varr==i]<-rep(listpumlrRmod,roundv(n,prob2[,i]))}}
+    if(iterative.synthetic.model==3){var2[varr==i]<-rep(listpumlrRmod,roundv(n,prob2[,i]))}}
   rectif(var2,prob)}
 
 
-Createfalsetables<-function(Totals=NULL,
-                            cluster.size=5,
-                            cluster.all.sample.rate=1/10,
-                            cluster.single.sample.size=20,
-                            seed=1){
-  if(is.null(Totals)){Totals=plyr::aaply(1:85,1,function(x){y=runif(3);y/sum(y)})}
-  L=if(!is.null(names(Totals)[[1]])){names(Totals)[[1]]}else{dim(Totals)[[1]]}
-  
-  nb.samples<-L+15
-  cluster.single.sample.rate <-cluster.all.sample.rate/nb.samples
-  N<-cluster.size*
-    cluster.single.sample.size/
-    cluster.all.sample.rate*
-    (nb.samples)
-  
-  nb.clusters<-N/cluster.size
-  sample.rate<-8*cluster.single.sample.size/nb.clusters
-  set.seed(seed)
-  
-  prob <- Totals/apply(Totals,1,sum)
-
-  creevar<-function(nmod,prob=NULL){
-    modal <- nmod
-    if( is.integer(nmod)&length(nmod)==1){modal <- 1:nmod} 
-    as.factor(sample(modal,N,replace=TRUE, prob=prob))}
-  
-  creevarpumlr<-function(prob,N=100000){
-    return(rep(listpumlrRmod,roundv(N,prob))[order(runif(N))])}
-  
-  
-  charge("doubbleserv")
-  prob2<-lapply(doubble,function(l){apply(l$N01,2,function(x){x/sum(x)})})
-  
-  
-  Popu<-data.frame(
-    hrlongid=rep(1:(N/cluster.size),each=cluster.size),
-    pulineno=rep(1:cluster.size,N/cluster.size),
-    pwsswgt=rep(1/sample.rate,N),
-    pumlrR   =creevarpumlr(prob[1,]),
-    pumlrRlag   =creevarpumlr(prob[1,]))
-  
-  lapply(1:3,function(j){
-    list.tablespop<-list(Popu)
-    for (i in (2:L)){
-      Popu<-data.frame(
-        hrlongid=Popu$hrlongid,
-        pulineno=Popu$pulineno,
-        pwsswgt=Popu$pwsswgt,
-        pumlrRlag   =Popu$pumlrR,
-        pumlrR   =changevar(Popu$pumlrR,prob2[[i-1]],prob[i,],toujourslesmemes=j))
-      list.tablespop<-c(list.tablespop,list(Popu))}
-    list.tablespop})}
+syntheticdataset<-
+  function(Totals=NULL,
+           crossTotals=NULL,
+           cluster.size=5,
+           cluster.all.sample.rate=1/10,
+           cluster.single.sample.size=20,
+           seed=1,
+           iterative.synthetic.models=c("Independent","Highly dependent")){
+    if(is.null(Totals)){Totals=plyr::aaply(1:85,1,function(x){y=runif(3);y/sum(y)})}
+    L=if(!is.null(names(Totals)[[1]])){names(Totals)[[1]]}else{dim(Totals)[[1]]}
+    
+    nb.samples<-L+15
+    cluster.single.sample.rate <-cluster.all.sample.rate/nb.samples
+    N<-cluster.size*
+      cluster.single.sample.size/
+      cluster.all.sample.rate*
+      (nb.samples)
+    
+    nb.clusters<-N/cluster.size
+    sample.rate<-8*cluster.single.sample.size/nb.clusters
+    set.seed(seed)
+    
+    prob <- Totals/apply(Totals,1,sum)
+    
+    creevar<-function(nmod,prob=NULL){
+      modal <- nmod
+      if( is.integer(nmod)&length(nmod)==1){modal <- 1:nmod} 
+      as.factor(sample(modal,N,replace=TRUE, prob=prob))}
+    
+    creevarpumlr<-function(prob,N=100000){
+      return(rep(listpumlrRmod,roundv(N,prob))[order(runif(N))])}
+    
+    if(!is.null(crossTotals)){prob2<-lapply(crossTotals,function(l){apply(l$N01,2,function(x){x/sum(x)})})}
+    
+    
+    Popu<-data.frame(
+      hrlongid=rep(1:(N/cluster.size),each=cluster.size),
+      pulineno=rep(1:cluster.size,N/cluster.size),
+      pwsswgt=rep(1/sample.rate,N),
+      pumlrR   =creevarpumlr(prob[1,]),
+      pumlrRlag   =creevarpumlr(prob[1,]))
+    
+    lapply(iterative.synthetic.models,function(j){
+      list.tablespop<-list(Popu)
+      for (i in (2:L)){
+        Popu<-data.frame(
+          hrlongid=Popu$hrlongid,
+          pulineno=Popu$pulineno,
+          pwsswgt=Popu$pwsswgt,
+          pumlrRlag   =Popu$pumlrR,
+          pumlrR   =changevar(Popu$pumlrR,prob2[[i-1]],prob[i,],iterative.synthetic.model=j))
+        list.tablespop<-c(list.tablespop,list(Popu))}
+      list.tablespop})}
 
 pumlrR <- function(i){replace(x<-as.character(-1+2*is.element(i,c("1","2"))+is.element(i,as.character(3:4))),x=="-1","_1")}
 
