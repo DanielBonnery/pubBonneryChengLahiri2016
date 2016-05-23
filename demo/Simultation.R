@@ -30,7 +30,20 @@ nmois <- length(tables.entree)
 nmonth<-nmois
 ##----------------------------------------------------------------
 #Create synthetic datasets of tables
-syntheticpops<-syntheticdataset(iterative.synthetic.models = "Independent")
+
+
+Totals      <-
+  plyr::aaply(
+    pubBonneryChengLahiri2016::S2comp,1,function(x){
+  c("pumlrR:0"=sum(x[paste0("pumlr_n",3:4)]),
+  "pumlrR:1"=sum(x[paste0("pumlr_n",1:2)]),
+  "pumlrR:_1"=sum(x[paste0("pumlr_n",5:7)]))})
+
+
+
+syntheticcpspops<-syntheticdataset(
+  Totals,
+  iterative.synthetic.models = "Independent")
 #Create all possible samples
 
 load(paste0(tablesfolder,"/Toussamples.Rdata"))

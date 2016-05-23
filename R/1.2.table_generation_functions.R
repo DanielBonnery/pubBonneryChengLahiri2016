@@ -20,7 +20,7 @@ changevar<-function(varr,prob2=NULL,prob,iterative.synthetic.model="Independent"
   }
 
 
-syntheticdataset<-
+syntheticcpsdataset<-
   function(Totals=NULL,
            crossTotals=NULL,
            cluster.size=5,
@@ -28,7 +28,8 @@ syntheticdataset<-
            cluster.single.sample.size=20,
            seed=1,
            iterative.synthetic.models=c("Independent","Highly dependent")){
-    if(is.null(Totals)){Totals=plyr::aaply(1:85,1,function(x){y=runif(3);y/sum(y)})}
+    if(is.null(Totals)){
+      Totals=plyr::aaply(1:85,1,function(x){y=runif(3);y/sum(y)})}
     L=if(!is.null(names(Totals)[[1]])){names(Totals)[[1]]}else{dim(Totals)[[1]]}
     
     nb.samples<-L+15
@@ -50,7 +51,7 @@ syntheticdataset<-
       as.factor(sample(modal,N,replace=TRUE, prob=prob))}
     
     creevarpumlr<-function(prob,N=100000){
-      return(rep(listpumlrRmod,roundv(N,prob))[order(runif(N))])}
+      return(rep(plyr::laply(names(prob),function(x){unlist(strsplit(x,split=":"))})[,2],roundv(N,prob))[order(runif(N))])}
     
     if(!is.null(crossTotals)){prob2<-lapply(crossTotals,function(l){apply(l$N01,2,function(x){x/sum(x)})})}
     
@@ -59,8 +60,8 @@ syntheticdataset<-
       hrlongid=rep(1:(N/cluster.size),each=cluster.size),
       pulineno=rep(1:cluster.size,N/cluster.size),
       pwsswgt=rep(1/sample.rate,N),
-      pumlrR   =creevarpumlr(prob[1,]),
-      pumlrRlag   =creevarpumlr(prob[1,]))
+      pumlrR      =creevarpumlr(prob[1,],N),
+      pumlrRlag   =creevarpumlr(prob[1,],N))
     
     lapply(iterative.synthetic.models,function(j){
       list.tablespop<-list(Popu)
@@ -70,7 +71,7 @@ syntheticdataset<-
           pulineno=Popu$pulineno,
           pwsswgt=Popu$pwsswgt,
           pumlrRlag   =Popu$pumlrR,
-          pumlrR   =changevar(Popu$pumlrR,prob2[[i-1]],prob[i,],iterative.synthetic.model=j))
+          pumlrR      =changevar(Popu$pumlrR,prob2[[i-1]],prob[i,],iterative.synthetic.model=j))
         list.tablespop<-c(list.tablespop,list(Popu))}
       list.tablespop})}
 
