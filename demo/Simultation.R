@@ -1,13 +1,13 @@
 #library("CompositeRegressionEstimation)
 library(pubBonneryChengLahiri2016)
 #List of tables
-allmonthsD<-seq(as.Date("20050101", "%Y%m%d"),
+if(FALSE){allmonthsD<-seq(as.Date("20050101", "%Y%m%d"),
                 as.Date("20120101", "%Y%m%d"),
                 by="month")
 allmonths <- format(seq(as.Date("20050101", "%Y%m%d"),
                        as.Date("20120101", "%Y%m%d"),
                        by="month"), "%b%Y")
-allmonthsD2<-as.Date(paste0("01",allmonths),"%d%b%Y")
+allmonthsD2<-as.Date(paste0("01",allmonths),"%d%b%Y")}
 
 startingyear<-2005
 startingmonth<-1
@@ -30,7 +30,7 @@ nmois <- length(tables.entree)
 nmonth<-nmois
 ##----------------------------------------------------------------
 #Create synthetic datasets of tables
-syntheticpops<-syntheticdataset()
+syntheticpops<-syntheticdataset(iterative.synthetic.models = "Independent")
 #Create all possible samples
 
 load(paste0(tablesfolder,"/Toussamples.Rdata"))

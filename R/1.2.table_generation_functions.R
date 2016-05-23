@@ -11,12 +11,13 @@ rectif<-function(varr,prob_1){
   return(as.factor(varr))}
 changevar<-function(varr,prob2=NULL,prob,iterative.synthetic.model="Independent"){
   var2<-varr
-  for(i in listpumlrRmod){
+  for(i in unique(varr)){
     n<-sum(varr==i)
-    if(iterative.synthetic.model==2){
+    if(iterative.synthetic.model=="independent"){
       var2[varr==i]<-rep(listpumlrRmod,roundv(n,prob2[,i]))[order(runif(n))]}
     if(iterative.synthetic.model==3){var2[varr==i]<-rep(listpumlrRmod,roundv(n,prob2[,i]))}}
-  rectif(var2,prob)}
+  rectif(var2,prob)
+  }
 
 
 syntheticdataset<-
