@@ -20,7 +20,7 @@ Allsamples<-Allsamplesf(dimnames(Totals)$month)
 AllsamplesH<-Allsamples[,((0:159)*5)+1,]-1/5+1
 #Computation of month in sample totals.
 
-list.tablesA<-plyr::laply(syntheticcpspopsA,list.tablesAf,ToussamplesH=AllsamplesH,.parallel=TRUE)
+system.time(list.tablesA<-plyr::laply(syntheticcpspopsA,list.tablesAf,ToussamplesH=AllsamplesH,.parallel=TRUE))
 
     dd<-dim(list.tablesA)
     mis<-array(list.tablesA,c(dd[1]/8,8,dd[2:4]))
