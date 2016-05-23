@@ -44,7 +44,9 @@ syntheticcpsdataset<-
     set.seed(seed)
     
     prob <- Totals/apply(Totals,1,sum)
+    prob2<-plyr::aaply(CountsChangePumlrR,c(1,3),function(x){x/sum(x)})
     
+
     creevar<-function(nmod,prob=NULL){
       modal <- nmod
       if( is.integer(nmod)&length(nmod)==1){modal <- 1:nmod} 
