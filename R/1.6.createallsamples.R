@@ -1,8 +1,8 @@
-Createtoutsamples<-function(tables.entree,
+Createtoutsamples<-function(months=NULL,
+                            nmois=length(months),
                             cluster.size=5,
                             cluster.all.sample.rate=1/10,
                             cluster.single.sample.size=20){
-  nmois<-length(tables.entree)
   nb.samples<-nmois+15
   cluster.single.sample.rate <-cluster.all.sample.rate/nb.samples
   N<-cluster.size*
@@ -15,27 +15,35 @@ Createtoutsamples<-function(tables.entree,
   set.seed(1)
   ecart.personne.meme.cluster.echantillon <- N/cluster.single.sample.size    
   ecart2<-cluster.size#(N/nb.clusters)/cluster.all.sample.rate
-  Toussamples <- lapply(1:nrep,
-                          function(nr){
-                            starte <- cluster.size*(nr-1)#sample(1:(N/cluster.size),1)
-                            
-                            samplei<-sapply(1:nb.samples,
-                                            function(i){
-                                              (starte-1+(rep((0:(cluster.single.sample.size-1))*
-                                                               ecart.personne.meme.cluster.echantillon,
-                                                             each=cluster.size)+
-                                                           rep((i-1)*ecart2+(1:cluster.size),
-                                                               cluster.single.sample.size)))%%N+1})
-                            return(list(samplei=samplei,
-                                        Samplei=sapply(1:nmois,function(i){
-                                          (samplei[,i+rep(c(0,12),each=4)+rep(0:3, 2)])})))})
+  Toussamples <- plyr::aaply(1:nrep,1,
+                        function(nr){
+                          starte <- cluster.size*(nr-1)#sample(1:(N/cluster.size),1)
+                          samplei<-sapply(1:nb.samples,
+                                          function(i){
+                                            (starte-1+(rep((0:(cluster.single.sample.size-1))*
+                                                             ecart.personne.meme.cluster.echantillon,
+                                                           each=cluster.size)+
+                                                         rep((i-1)*ecart2+(1:cluster.size),
+                                                             cluster.single.sample.size)))%%N+1})
+                          dimnames(samplei)<-list(NULL,if(is.null(months)){1:nbsamples}else{c(months,paste0("Last month +",1:15))})
+                          names(dimnames(samplei))<-c("","m")
+                          Hmisc::label(samplei)<-c("Population indexes for month in sample 1 in  month m rotation group")
+                          Samplei=sapply(1:nmois,function(i){(samplei[,i+rep(c(0,12),each=4)+rep(0:3, 2)])})
+                          dimnames(Samplei)<-list(NULL,if(is.null(months)){1:nmois}else{months})
+                          names(dimnames(Samplei))<-c("","m")
+                          Hmisc::label(Samplei)<-c("Population indexes for selected elements in month m")
+                          Samplei})
+  Hmisc::label(Toussamples)<-c("List of all possible longitudinal samples")
   Toussamples}
 
 
+
+
+#Housheholds sample
 ToussamplesHf<-function(){
   load(paste0(tablesfolder,"/Toussamples.Rdata"))
   ToussamplesH<-
-    lapply(Toussamples,function(l){Sample<-((l$Sample[((0:159)*5)+1,])-1)/5+1})
+    lapply(Toussamples,function(l){Sample<-((l$Samplei[((0:159)*5)+1,])-1)/5+1})
   save(ToussamplesH,file=paste0(tablesfolder,"/ToussamplesH.Rdata"))}
 
 
@@ -66,12 +74,12 @@ Faitout<-function(){
 #Faitout()
 Faitout2<-function(){
   for(popnum in 1:3){for (bias in c("","bias")){
-  load(paste0(tablesfolder,"/list.tablesA_",bias,popnum,".Rdata"))
-  assign(paste0("x",bias,popnum),list.tablesA)}}
-list.tablesA<-abind(x1,x2,x3,xbias1,xbias2,xbias3,along=5)
-list.tablesA<-array(list.tablesA,c(dim(x1),3,2))
-dimnames(list.tablesA)<-c(dimnames(x1),list(1:3,c("","bias")))
-dimnames(list.tablesA)[[3]]<-tables.entree
-dimnames(list.tablesA)[[4]]<-1:nrep
-save(list.tablesA,file=paste0(tablesfolder,"/list.tablesA.Rdata"))}
+    load(paste0(tablesfolder,"/list.tablesA_",bias,popnum,".Rdata"))
+    assign(paste0("x",bias,popnum),list.tablesA)}}
+  list.tablesA<-abind(x1,x2,x3,xbias1,xbias2,xbias3,along=5)
+  list.tablesA<-array(list.tablesA,c(dim(x1),3,2))
+  dimnames(list.tablesA)<-c(dimnames(x1),list(1:3,c("","bias")))
+  dimnames(list.tablesA)[[3]]<-tables.entree
+  dimnames(list.tablesA)[[4]]<-1:nrep
+  save(list.tablesA,file=paste0(tablesfolder,"/list.tablesA.Rdata"))}
 

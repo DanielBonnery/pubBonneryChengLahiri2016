@@ -3,9 +3,6 @@ what=c("mistotals","covar","coeffYF","best.coeffAK2","best.coeffAK3","best.const
        "S","AK3","estAK3","YF","estYF","S2","MRR")
 changeak<-function(ak){ak[c(1,4,3,2,5,6)]}
 
-checke<-function(u=1:nrep,file,adde2){
-  u[!is.element(paste0(file,adde2,"_",u,".Rdata"),list.files(Resultsfolder))]}
-
 Compute_S2MRAK_rep <- function(
   what=c("mistotals",
          "covar",
@@ -36,7 +33,6 @@ Compute_S2MRAK_rep <- function(
   pcserv="simu"
   #load(paste0(tablesfolder,"/list.tablessimu.Rdata"))
   charge("list.dft.x2");
-  
   
   list.y=c("pumlrR")
   w="pwsswgt"

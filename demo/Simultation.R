@@ -44,14 +44,13 @@ crossTotals<-CountsChangePumlrR
 
 syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
 Hmisc::label(syntheticcpspops,'Synthetic "CPS populations" datasets')
+#Draw all probable samples
+Toussamples<-Createtoutsamples(dimnames(Totals)$month)
 
-#Create all possible samples
+#
+hrmis=factor(rep(8:1,each=100))
 
-load(paste0(tablesfolder,"/Toussamples.Rdata"))
-hrmis=as.factor(rep(8:1,each=100))
-list.tables<-lapply(1:85,function(j){
-  cbind((list.tablespop[[j]])[Toussamples[[1]]$Samplei[,j],],
-        hrmis)  })
+list.tables<-lapply(1:85,function(j){cbind((list.tablespop[[j]])[Toussamples[[1]]$Samplei[,j],],hrmis)  })
 names(list.tables)<-tables.entree
 save(list.tables,file=paste0(tablesfolder,"/list.tablessimu.Rdata"))
 #list.tablesregroup <- Regroupe(list.tables,"hwniwgt")
@@ -59,25 +58,7 @@ save(list.tables,file=paste0(tablesfolder,"/list.tablessimu.Rdata"))
 #save(list.tablesregroup,file=paste0(tablesfolder,"/list.tablesregroupsimu.Rdata"))
 rm(list.tablespop,list.tables)#,list.tablesregroup)
 
-lmonyea<-lmoye(12,currentmonth,startingyear,currentyear)
-list.tables <-lapply(lmonyea,creeRtablefromDB)
-list.tables<-Chargetables(list.tables)
-save(list.tables,file=paste0(tablesfolder,"/list.tablesweb.Rdata"))
-#list.tablesregroup <- Regroupe(list.tables,"hwniwgt")
-#save(list.tablesregroup,file=paste0(tablesfolder,"/list.tablesegroupweb.Rdata"))
 
-list.tablesbrut<-Importesas(wd,tables.entree)
-list.tables<-Chargetables(list.tablesbrut)
-save(list.tables,file=paste0(tablesfolder,"/list.tablesserv.Rdata"))
-#    list.tablesregroup <- Regroupe(list.tables,"hwniwgt")
-#   save(list.tablesregroup,file=paste0(tablesfolder,"/list.tablesregroupserv.Rdata"))}
-rm(list.tables)    
-#rm(list.tablesregroup)
-
-#Launch computations
-typetable<-c("simu")
-pcserv="simu"
-load(paste0(tablesfolder,"/list.tablessimu.Rdata"))
 computemistotals(list.tables)
 
 if(steps[4]){  
@@ -87,19 +68,7 @@ if(steps[4]){
     eval(parse(text=Sauve("list.dft.x2",name.add="")));rm(list.dft.x2)
     rm(list.tablespop)}
   if(web){list.dft.x2<-lapply(list.tables,function(l){WS(list(l),list.y=c("pesex"),weight="pwsswgt")})}
-  if(!PC ){
-    list.dft.x2  <- lapply(list.tables,function(l){WS(list(l),list.y=c("pehspnon","pesex"),weight="pwsswgt")})
-    #list.dft.x2H <- lapply(list.tables,function(l){WS(list(l),list.y=c("gestrec","pesex","pehspnon","prwtrace","prblnonb","peage"))})}
-    #list.dft.x2R <-list.dft.x2
-    #if(!PC|simu){list.dft.x2RH <-list.dft.x2H}
-    
-    save(list.dft.x2,file=paste("list.dft.x2.",pcserv,".Rdata",sep=""))  
-    #save(list.dft.x2R,file=paste("list.dft.x2R.",pcserv,".Rdata",sep=""))
-    #if(!PC|simu){save(list.dft.x2H,file=paste("list.dft.x2H.",pcserv,".Rdata",sep=""))  
-    #             save(list.dft.x2RH,file=paste("list.dft.x2RH.",pcserv,".Rdata",sep=""))}
-  }
-  
-  
+
   if(simu){
     
     what="S2"
