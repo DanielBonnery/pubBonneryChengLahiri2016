@@ -11,34 +11,37 @@ crossTotals<-pubBonneryChengLahiri2016::CountsChangePumlrR
 
 
 syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
-Hmisc::label(syntheticcpspops,'Synthetic "CPS populations" datasets')
-#Draw all probable samples
-Toussamples<-Createtoutsamples(dimnames(Totals)$month)
 
-#
+syntheticcpspopsA<-plyr::laply(syntheticcpspops,list.tablespopAf,.progress = "text")
+
+
+#Draw all probable samples
+Allsamples<-Allsamplesf(dimnames(Totals)$month)
+AllsamplesH<-Allsamples[,((0:159)*5)+1,]-1/5+1
+#Computation of month in sample totals.
+
+list.tablesA<-plyr::laply(syntheticcpspopsA,list.tablesAf,ToussamplesH=AllsamplesH)
+
+    load(paste0(tablesfolder,"/list.tablesA",adde2,".Rdata"))
+    dd<-dim(list.tablesA)
+    mis<-array(list.tablesA,c(dd[1]/8,8,dd[2:4]))
+    mistotalscomp<-aperm(8*125*apply(mis,2:5,sum),c(3,1,2,4))[,8:1,,]
+    dimnames(mistotalscomp)[[1]]<-tables.entree
+    dimnames(mistotalscomp)[[2]]<-paste0("hrmis",1:8)
+    dimnames(mistotalscomp)[[3]]<-dimnames(list.tablesA)[[2]]
+    dimnames(mistotalscomp)[[4]]<-paste0("rep",1:nrep)
+    mistotalscomp<-mistotalscomp[,,listpumlrR,]
+    eval(parse(text=Sauve("mistotalscomp",adde2)))
+    mtc<-array(aperm(mistotalscomp,c(3,2,1,4)),c(prod(dim(mistotalscomp)[1:3]),dim(mistotalscomp)[4]))
+    eval(parse(text=Sauve("mtc",adde2)))})}
+
+
+
+#Computation of month in sample totals
 hrmis=factor(rep(8:1,each=100))
 
-list.tables<-lapply(1:85,function(j){cbind((list.tablespop[[j]])[Toussamples[[1]]$Samplei[,j],],hrmis)  })
-names(list.tables)<-tables.entree
-save(list.tables,file=paste0(tablesfolder,"/list.tablessimu.Rdata"))
-#list.tablesregroup <- Regroupe(list.tables,"hwniwgt")
-#names(list.tablesregroup)<-tables.entree
-#save(list.tablesregroup,file=paste0(tablesfolder,"/list.tablesregroupsimu.Rdata"))
-rm(list.tablespop,list.tables)#,list.tablesregroup)
 
 
-computemistotals(list.tables)
-
-if(steps[4]){  
-  if(simu){
-    load(paste0(tablesfolder,"/list.tablespop.Rdata"))
-    list.dft.x2<- lapply(list.tablespop,function(l){WS(list(l),list.y=c("pehspnon","pesex"))})
-    eval(parse(text=Sauve("list.dft.x2",name.add="")));rm(list.dft.x2)
-    rm(list.tablespop)}
-  if(web){list.dft.x2<-lapply(list.tables,function(l){WS(list(l),list.y=c("pesex"),weight="pwsswgt")})}
-
-  if(simu){
-    
     what="S2"
     what="MRR"
     what="S2"

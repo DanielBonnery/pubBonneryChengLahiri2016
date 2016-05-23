@@ -79,7 +79,9 @@ syntheticcpsdataset<-
       Hmisc::label(list.tablespop,paste0('Synthetic "CPS populations" datasets, ',j," method"))
       list.tablespop})
     names(LL)<-iterative.synthetic.models
-    LL}
+    Hmisc::label(LL)<-'Synthetic "CPS populations" datasets'
+    LL
+    }
 
 pumlrR <- function(i){replace(x<-as.character(-1+2*is.element(i,c("1","2"))+is.element(i,as.character(3:4))),x=="-1","_1")}
 
@@ -153,14 +155,25 @@ ChargetablespopA<-function(){
   save(tablespopA,file=paste0(tablesfolder,"/tablespopA.Rdata"))
 }
 
-list.tablespopAf<-function(popnum){
-  load(paste0(tablesfolder,"/list.tablespop",popnum,".Rdata"))
+list.tablespopAf<-function(list.tablespop){
   list.tablespopA<-
     array(unlist(lapply(list.tablespop,function(l){
       apply(array(
         cbind(pumlrR_n0=l$pumlrR=="0",
               pumlrR_n1=l$pumlrR=="1",
               pumlrR_n_1=l$pumlrR=="_1")*1,c(5,20000,3)),2:3,sum)})),c(20000,3,length(list.tablespop)))
-  dimnames(list.tablespopA)[[2]]<-listpumlrR
-  save(list.tablespopA,file=paste0(tablesfolder,"/list.tablespopA",popnum,".Rdata"))}
+  dimnames(list.tablespopA)[2:3]<-list(c("0","1","_1"),names(list.tablespop))
+  list.tablespopA}
+
+
+system.time(uu<-model.matrix(~0+pumlrR,data=syntheticcpspops[[1]][[1]]))
+system.time(uu2<-cbind(pumlrR_n0=syntheticcpspops[[1]][[1]]$pumlrR=="0",
+                      pumlrR_n1=syntheticcpspops[[1]][[1]]$pumlrR=="1",
+                      pumlrR_n_1=syntheticcpspops[[1]][[1]]$pumlrR=="_1")*1)
+
+
+dimnames(uu)<-NULL
+dimnames(uu2)<-NULL
+identical(uu,uu2)
+
 #sapply(1:3,list.tablespopAf)
