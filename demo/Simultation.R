@@ -1,5 +1,5 @@
 library(CompositeRegressionEstimation)
-#library(pubBonneryChengLahiri2016)
+library(pubBonneryChengLahiri2016)
 Totals      <-
   plyr::aaply(
     pubBonneryChengLahiri2016::S2comp,1,function(x){
@@ -12,17 +12,16 @@ crossTotals<-pubBonneryChengLahiri2016::CountsChangePumlrR
 
 syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
 
-syntheticcpspopsA<-plyr::laply(syntheticcpspops,list.tablespopAf,.progress = "text")
-
+syntheticcpspopsA<-plyr::laply(syntheticcpspops,list.tablespopAf,.parallel=TRUE)
+gc()
 
 #Draw all probable samples
 Allsamples<-Allsamplesf(dimnames(Totals)$month)
 AllsamplesH<-Allsamples[,((0:159)*5)+1,]-1/5+1
 #Computation of month in sample totals.
 
-list.tablesA<-plyr::laply(syntheticcpspopsA,list.tablesAf,ToussamplesH=AllsamplesH)
+list.tablesA<-plyr::laply(syntheticcpspopsA,list.tablesAf,ToussamplesH=AllsamplesH,.parallel=TRUE)
 
-    load(paste0(tablesfolder,"/list.tablesA",adde2,".Rdata"))
     dd<-dim(list.tablesA)
     mis<-array(list.tablesA,c(dd[1]/8,8,dd[2:4]))
     mistotalscomp<-aperm(8*125*apply(mis,2:5,sum),c(3,1,2,4))[,8:1,,]

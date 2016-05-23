@@ -91,11 +91,9 @@ ToussamplesHf<-function(){
 
 #ToussamplesHf()
 list.tablesAf<-function(list.tablespopA,AllsamplesH){
-  do.call(abind,
-          c(lapply(ToussamplesH,function(l){
-            do.call(abind, c(lapply(1:dim(Allsamples)$nmonth,function(j){
-              list.tablespopA[l[,j],,j]}),list(along=3)))})
-            ,list(along=4)))}
+  plyr::maply(1:dim(Allsamples)[1],function(i){
+    plyr::maply(1:dim(Allsamples)[3],function(j){
+      list.tablespopA[Allsamples[i,,j],,j]})})}
 
 
 
