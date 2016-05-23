@@ -18,22 +18,61 @@ Createtoutsamples<-function(months=NULL,
   Toussamples <- plyr::aaply(1:nrep,1,
                         function(nr){
                           starte <- cluster.size*(nr-1)#sample(1:(N/cluster.size),1)
-                          samplei<-sapply(1:nb.samples,
+                          monthinsample8<-sapply(1:nb.samples,
                                           function(i){
                                             (starte-1+(rep((0:(cluster.single.sample.size-1))*
                                                              ecart.personne.meme.cluster.echantillon,
                                                            each=cluster.size)+
                                                          rep((i-1)*ecart2+(1:cluster.size),
                                                              cluster.single.sample.size)))%%N+1})
-                          dimnames(samplei)<-list(NULL,if(is.null(months)){1:nbsamples}else{c(months,paste0("Last month +",1:15))})
-                          names(dimnames(samplei))<-c("","m")
-                          Hmisc::label(samplei)<-c("Population indexes for month in sample 1 in  month m rotation group")
-                          Samplei=sapply(1:nmois,function(i){(samplei[,i+rep(c(0,12),each=4)+rep(0:3, 2)])})
-                          dimnames(Samplei)<-list(NULL,if(is.null(months)){1:nmois}else{months})
-                          names(dimnames(Samplei))<-c("","m")
-                          Hmisc::label(Samplei)<-c("Population indexes for selected elements in month m")
-                          Samplei})
-  Hmisc::label(Toussamples)<-c("List of all possible longitudinal samples")
+                          sapply(1:nmois,function(i){(monthinsample8[,i+rep(c(0,12),each=4)+rep(0:3, 2)])})})
+  names(dimnames(Toussamples))<-c("i (longitudinal sample)","j (sample element index)","m (month)")
+  dimnames(Toussamples)<-list(1:nrep,
+                           paste0("mis - ", rep(8:1,each=cluster.single.sample.size*cluster.size),
+                                  rep(1:cluster.single.sample.size*cluster.size,8)),
+                           months)
+  Hmisc::label(Toussamples)<-c("Population index for selected element of sample index j in month m and longitudinal sample i")
+  
+  Toussamples}
+
+
+Createtoutsamples2<-function(months=NULL,
+                             nmois=length(months),
+                             cluster.size=5,
+                             cluster.all.sample.rate=1/10,
+                             cluster.single.sample.size=20){
+  nb.samples<-nmois+15
+  cluster.single.sample.rate <-cluster.all.sample.rate/nb.samples
+  N<-cluster.size*
+    cluster.single.sample.size/
+    cluster.all.sample.rate*
+    (nb.samples)
+  nb.clusters<-N/cluster.size
+  sample.rate<-8*cluster.single.sample.size/nb.clusters
+  nrep <- 1000
+  set.seed(1)
+  ecart.personne.meme.cluster.echantillon <- N/cluster.single.sample.size    
+  ecart2<-cluster.size#(N/nb.clusters)/cluster.all.sample.rate
+  monthinsample8s <- plyr::aaply(1:nrep,1,
+                                 function(nr){
+                                   starte <- cluster.size*(nr-1)#sample(1:(N/cluster.size),1)
+                                   sapply(1:nb.samples,
+                                          function(i){
+                                            (starte-1+(rep((0:(cluster.single.sample.size-1))*
+                                                             ecart.personne.meme.cluster.echantillon,
+                                                           each=cluster.size)+
+                                                         rep((i-1)*ecart2+(1:cluster.size),
+                                                             cluster.single.sample.size)))%%N+1})})
+  Toussamples<-do.call(abind::abind,
+                       c(lapply(rep(c(0,12),each=4)+rep(0:3, 2),
+                                function(i){monthinsample8s[,,(1+i):(85+i)]}),along=2))
+  names(dimnames(Toussamples))<-c("i (longitudinal sample)","j (sample element index)","m (month)")
+  dimnames(Toussamples)<-list(1:nrep,
+                           paste0("mis - ", rep(8:1,each=cluster.single.sample.size*cluster.size),
+                                  rep(1:cluster.single.sample.size*cluster.size,8)),
+                           months)
+  Hmisc::label(Toussamples)<-c("Population index for selected element of sample index j in month m and longitudinal sample i")
+  
   Toussamples}
 
 

@@ -45,7 +45,8 @@ crossTotals<-CountsChangePumlrR
 syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
 Hmisc::label(syntheticcpspops,'Synthetic "CPS populations" datasets')
 #Draw all probable samples
-Toussamples<-Createtoutsamples(dimnames(Totals)$month)
+system.time(Toussamples<-Createtoutsamples(dimnames(Totals)$month))
+system.time(Toussamples2<-Createtoutsamples2(dimnames(Totals)$month))
 
 #
 hrmis=factor(rep(8:1,each=100))
