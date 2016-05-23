@@ -1,8 +1,8 @@
-Createtoutsamples<-function(tables.entree){
+Createtoutsamples<-function(tables.entree,
+                            cluster.size=5,
+                            cluster.all.sample.rate=1/10,
+                            cluster.single.sample.size=20){
   nmois<-length(tables.entree)
-  cluster.size<-5
-  cluster.all.sample.rate <-1/10
-  cluster.single.sample.size<-20
   nb.samples<-nmois+15
   cluster.single.sample.rate <-cluster.all.sample.rate/nb.samples
   N<-cluster.size*
@@ -12,12 +12,10 @@ Createtoutsamples<-function(tables.entree){
   nb.clusters<-N/cluster.size
   sample.rate<-8*cluster.single.sample.size/nb.clusters
   nrep <- 1000
-  
-  
   set.seed(1)
   ecart.personne.meme.cluster.echantillon <- N/cluster.single.sample.size    
   ecart2<-cluster.size#(N/nb.clusters)/cluster.all.sample.rate
-  Toussamples <- mclapply(1:nrep,
+  Toussamples <- lapply(1:nrep,
                           function(nr){
                             starte <- cluster.size*(nr-1)#sample(1:(N/cluster.size),1)
                             
@@ -31,10 +29,7 @@ Createtoutsamples<-function(tables.entree){
                             return(list(samplei=samplei,
                                         Samplei=sapply(1:nmois,function(i){
                                           (samplei[,i+rep(c(0,12),each=4)+rep(0:3, 2)])})))})
-  
-  save(Toussamples,file=paste0(tablesfolder,"/Toussamples.Rdata"))
-  
-}
+  Toussamples}
 
 
 ToussamplesHf<-function(){

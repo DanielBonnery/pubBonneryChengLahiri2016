@@ -1,21 +1,21 @@
 roundv<-function(n,x){y<-floor(n*x);y[length(x)]<-n-sum(y[-length(x)]);y}
 rectif<-function(varr,prob_1){
-  eff_0=unlist(table(varr))
-  names(eff_0)<-paste0("pumlrR_n",names(eff_0))
-  eff_0<-eff_0[listpumlrR]
-  eff_1<-roundv(N,prob_1)[listpumlrR]
+  eff_0=unlist(table(varr))[names(prob_1)]
+  eff_1<-roundv(N,prob_1)
   eff<-eff_1-eff_0
-  qui<-substr(names(eff)[eff<0],9,11)
-  remps<-substr(names(eff)[eff>0],9,11)
+  qui<-names(eff)[eff<0]
+  remps<-names(eff)[eff>0]
   varr[sample((1:N)[is.element(varr,qui)],sum(eff[eff>0]))]<-rep(remps,eff[eff>0])
   return(as.factor(varr))}
 changevar<-function(varr,prob2=NULL,prob,iterative.synthetic.model="Independent"){
   var2<-varr
-  for(i in unique(varr)){
+  zz=unique(varr)
+  for(i in zz){
     n<-sum(varr==i)
-    if(iterative.synthetic.model=="independent"){
-      var2[varr==i]<-rep(listpumlrRmod,roundv(n,prob2[,i]))[order(runif(n))]}
-    if(iterative.synthetic.model==3){var2[varr==i]<-rep(listpumlrRmod,roundv(n,prob2[,i]))}}
+      if(iterative.synthetic.model=="2dorder"){
+        var2[varr==i]<-rep(zz,roundv(n,prob2[i,]))[order(runif(n))]}
+    if(iterative.synthetic.model=="2dorder-indexdependent"){
+      var2[varr==i]<-rep(zz,roundv(n,prob2[i,]))}}
   rectif(var2,prob)
   }
 
@@ -27,7 +27,7 @@ syntheticcpsdataset<-
            cluster.all.sample.rate=1/10,
            cluster.single.sample.size=20,
            seed=1,
-           iterative.synthetic.models=c("Independent","Highly dependent")){
+           iterative.synthetic.models=c("Independent","2dorder","2dorder-indexdependent")){
     if(is.null(Totals)){
       Totals=plyr::aaply(1:85,1,function(x){y=runif(3);y/sum(y)})}
     L=if(!is.null(names(Totals)[[1]])){names(Totals)[[1]]}else{dim(Totals)[[1]]}
@@ -44,18 +44,17 @@ syntheticcpsdataset<-
     set.seed(seed)
     
     prob <- Totals/apply(Totals,1,sum)
-    prob2<-plyr::aaply(CountsChangePumlrR,c(1,3),function(x){x/sum(x)})
+    prob2<-plyr::aaply(crossTotals,1:2,function(x){x/sum(x)})
+    dimnames(prob2)<-dimnames(crossTotals)
+    Hmisc::label(prob2)<-"P(PumlrR(t+1)=j|PumlrR(t)=i)"
     
-
     creevar<-function(nmod,prob=NULL){
       modal <- nmod
       if( is.integer(nmod)&length(nmod)==1){modal <- 1:nmod} 
       as.factor(sample(modal,N,replace=TRUE, prob=prob))}
     
     creevarpumlr<-function(prob,N=100000){
-      return(rep(plyr::laply(names(prob),function(x){unlist(strsplit(x,split=":"))})[,2],roundv(N,prob))[order(runif(N))])}
-    
-    if(!is.null(crossTotals)){prob2<-lapply(crossTotals,function(l){apply(l$N01,2,function(x){x/sum(x)})})}
+      return(rep(names(prob),roundv(N,prob))[order(runif(N))])}
     
     
     Popu<-data.frame(
@@ -65,17 +64,21 @@ syntheticcpsdataset<-
       pumlrR      =creevarpumlr(prob[1,],N),
       pumlrRlag   =creevarpumlr(prob[1,],N))
     
-    lapply(iterative.synthetic.models,function(j){
+    LL<-lapply(iterative.synthetic.models,function(j){
       list.tablespop<-list(Popu)
+      Popu2=Popu
       for (i in (2:L)){
-        Popu<-data.frame(
+        Popu2<-data.frame(
           hrlongid=Popu$hrlongid,
           pulineno=Popu$pulineno,
           pwsswgt=Popu$pwsswgt,
           pumlrRlag   =Popu$pumlrR,
-          pumlrR      =changevar(Popu$pumlrR,prob2[[i-1]],prob[i,],iterative.synthetic.model=j))
-        list.tablespop<-c(list.tablespop,list(Popu))}
-      list.tablespop})}
+          pumlrR      =changevar(Popu2$pumlrR,prob2[i-1,,],prob[i,],iterative.synthetic.model=j))
+        list.tablespop<-c(list.tablespop,list(Popu2))}
+      Hmisc::label(list.tablespop,paste0('Synthetic "CPS populations" datasets, ',j," method"))
+      list.tablespop})
+    names(LL)<-iterative.synthetic.models
+    LL}
 
 pumlrR <- function(i){replace(x<-as.character(-1+2*is.element(i,c("1","2"))+is.element(i,as.character(3:4))),x=="-1","_1")}
 

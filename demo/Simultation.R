@@ -35,15 +35,16 @@ nmonth<-nmois
 Totals      <-
   plyr::aaply(
     pubBonneryChengLahiri2016::S2comp,1,function(x){
-  c("pumlrR:0"=sum(x[paste0("pumlr_n",3:4)]),
-  "pumlrR:1"=sum(x[paste0("pumlr_n",1:2)]),
-  "pumlrR:_1"=sum(x[paste0("pumlr_n",5:7)]))})
+  c("0"=sum(x[paste0("pumlr_n",3:4)]),
+  "1"=sum(x[paste0("pumlr_n",1:2)]),
+  "_1"=sum(x[paste0("pumlr_n",5:7)]))})
+names(dimnames(Totals))<-c("month","pumlrR")
+crossTotals<-CountsChangePumlrR
 
 
+syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
+Hmisc::label(syntheticcpspops,'Synthetic "CPS populations" datasets')
 
-syntheticcpspops<-syntheticdataset(
-  Totals,
-  iterative.synthetic.models = "Independent")
 #Create all possible samples
 
 load(paste0(tablesfolder,"/Toussamples.Rdata"))
