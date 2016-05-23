@@ -166,14 +166,4 @@ list.tablespopAf<-function(list.tablespop){
   list.tablespopA}
 
 
-system.time(uu<-model.matrix(~0+pumlrR,data=syntheticcpspops[[1]][[1]]))
-system.time(uu2<-cbind(pumlrR_n0=syntheticcpspops[[1]][[1]]$pumlrR=="0",
-                      pumlrR_n1=syntheticcpspops[[1]][[1]]$pumlrR=="1",
-                      pumlrR_n_1=syntheticcpspops[[1]][[1]]$pumlrR=="_1")*1)
-
-
-dimnames(uu)<-NULL
-dimnames(uu2)<-NULL
-identical(uu,uu2)
-
 #sapply(1:3,list.tablespopAf)
