@@ -1,5 +1,6 @@
 #library("CompositeRegressionEstimation)
 library(pubBonneryChengLahiri2016)
+
 #List of tables
 if(FALSE){allmonthsD<-seq(as.Date("20050101", "%Y%m%d"),
                 as.Date("20120101", "%Y%m%d"),
@@ -39,7 +40,7 @@ Totals      <-
   "1"=sum(x[paste0("pumlr_n",1:2)]),
   "_1"=sum(x[paste0("pumlr_n",5:7)]))})
 names(dimnames(Totals))<-c("month","pumlrR")
-crossTotals<-CountsChangePumlrR
+crossTotals<-pubBonneryChengLahiri2016::CountsChangePumlrR
 
 
 syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
