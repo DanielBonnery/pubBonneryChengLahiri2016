@@ -1,5 +1,6 @@
 roundv<-function(n,x){y<-floor(n*x);y[length(x)]<-n-sum(y[-length(x)]);y}
 rectif<-function(varr,prob_1){
+  N<-length(varr)
   eff_0=unlist(table(varr))[names(prob_1)]
   eff_1<-roundv(N,prob_1)
   eff<-eff_1-eff_0
