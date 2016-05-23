@@ -1,38 +1,5 @@
-#library("CompositeRegressionEstimation)
-library(pubBonneryChengLahiri2016)
-
-#List of tables
-if(FALSE){allmonthsD<-seq(as.Date("20050101", "%Y%m%d"),
-                as.Date("20120101", "%Y%m%d"),
-                by="month")
-allmonths <- format(seq(as.Date("20050101", "%Y%m%d"),
-                       as.Date("20120101", "%Y%m%d"),
-                       by="month"), "%b%Y")
-allmonthsD2<-as.Date(paste0("01",allmonths),"%d%b%Y")}
-
-startingyear<-2005
-startingmonth<-1
-currentyear<-2012
-currentmonth<-1
-listpumlrRmod <- c(0,1,"_1")#factor(c("Unemployed","Employed","Not in the labor force"))
-listpumlrmod <- c(1:7,"_1")#factor(c("Unemployed","Employed","Not in the labor force"))
-listpumlrR<-paste0("pumlrR_n",listpumlrRmod)
-listpumlr<-paste0("pumlr_n",listpumlrmod)
-studyvar<-c("unemployment",listpumlrR)
-#adde2f<-function(bias,popnum){c(outer(paste0("_",bias),popnum,paste0))}
-biass=c("","bias")
-popnums=1:3
-list.adde2<-(function(bias,popnum){c(outer(paste0("_",bias),popnum,paste0))})(biass,popnums)
-
-##----------------------------------------------------------------                                                                                                                                                                                                                                                              
-tables.entree<-lta(startingmonth,currentmonth,startingyear,currentyear)
-
-nmois <- length(tables.entree)
-nmonth<-nmois
-##----------------------------------------------------------------
-#Create synthetic datasets of tables
-
-
+library(CompositeRegressionEstimation)
+#library(pubBonneryChengLahiri2016)
 Totals      <-
   plyr::aaply(
     pubBonneryChengLahiri2016::S2comp,1,function(x){
@@ -46,8 +13,7 @@ crossTotals<-pubBonneryChengLahiri2016::CountsChangePumlrR
 syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
 Hmisc::label(syntheticcpspops,'Synthetic "CPS populations" datasets')
 #Draw all probable samples
-system.time(Toussamples<-Createtoutsamples(dimnames(Totals)$month))
-system.time(Toussamples2<-Createtoutsamples2(dimnames(Totals)$month))
+Toussamples<-Createtoutsamples(dimnames(Totals)$month)
 
 #
 hrmis=factor(rep(8:1,each=100))

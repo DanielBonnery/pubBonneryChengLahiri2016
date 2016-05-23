@@ -1,4 +1,4 @@
-Createtoutsamples<-function(months=NULL,
+Createtoutsamples2<-function(months=NULL,
                             nmois=length(months),
                             cluster.size=5,
                             cluster.all.sample.rate=1/10,
@@ -28,15 +28,15 @@ Createtoutsamples<-function(months=NULL,
                           sapply(1:nmois,function(i){(monthinsample8[,i+rep(c(0,12),each=4)+rep(0:3, 2)])})})
   names(dimnames(Toussamples))<-c("i (longitudinal sample)","j (sample element index)","m (month)")
   dimnames(Toussamples)<-list(1:nrep,
-                           paste0("mis - ", rep(8:1,each=cluster.single.sample.size*cluster.size),
-                                  rep(1:cluster.single.sample.size*cluster.size,8)),
+                           paste0("mis: ", rep(8:1,each=cluster.single.sample.size*cluster.size),", id:",
+                                  rep(1:(cluster.single.sample.size*cluster.size),8)),
                            months)
   Hmisc::label(Toussamples)<-c("Population index for selected element of sample index j in month m and longitudinal sample i")
   
   Toussamples}
 
 
-Createtoutsamples2<-function(months=NULL,
+Createtoutsamples<-function(months=NULL,
                              nmois=length(months),
                              cluster.size=5,
                              cluster.all.sample.rate=1/10,

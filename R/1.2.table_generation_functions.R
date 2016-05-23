@@ -44,7 +44,7 @@ syntheticcpsdataset<-
     set.seed(seed)
     
     prob <- Totals/apply(Totals,1,sum)
-    prob2<-plyr::aaply(crossTotals,1:2,function(x){x/sum(x)})
+    prob2<-plyr::aaply(crossTotals,1:2,function(x){matrix(x/sum(x))})
     dimnames(prob2)<-dimnames(crossTotals)
     Hmisc::label(prob2)<-"P(PumlrR(t+1)=j|PumlrR(t)=i)"
     
