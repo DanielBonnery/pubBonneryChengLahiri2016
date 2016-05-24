@@ -1,16 +1,17 @@
+#1. Load libraries
 library(CompositeRegressionEstimation)
 library(pubBonneryChengLahiri2016)
-options(cores=8)
-Totals      <-
-  plyr::aaply(
-    pubBonneryChengLahiri2016::S2comp,1,function(x){
-  c("0"=sum(x[paste0("pumlr_n",3:4)]),
-  "1"=sum(x[paste0("pumlr_n",1:2)]),
-  "_1"=sum(x[paste0("pumlr_n",5:7)]))})
-names(dimnames(Totals))<-c("month","pumlrR")
-crossTotals<-pubBonneryChengLahiri2016::CountsChangePumlrR
 
-syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
+library(doParallel)
+library(plyr)
+
+nodes <- detectCores()
+cl <- makeCluster(nodes)
+registerDoParallel(cl)
+
+#2. 
+syntheticcpspops<-syntheticcpsdataset(pubBonneryChengLahiri2016::CPSTotals,
+                                      pubBonneryChengLahiri2016::CountsChangePumlrR)
 
 syntheticcpspopsHA<-plyr::laply(syntheticcpspops,syntheticccpspopHAf,.progress="text")
 names(dimnames(syntheticcpspopsHA))[1]<-c("s")
