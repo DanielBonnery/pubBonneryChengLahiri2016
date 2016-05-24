@@ -28,7 +28,7 @@ gc()
 
 #list.tablesA<-list.tablesAf(syntheticcpspopsHA,AllsamplesH)
 misestimates<-800*plyr::maply(expand.grid(i=1:1000,m=1:85,misi=1:8),misH,syntheticcpspopsHA=syntheticcpspopsHA,.progress="text")
-dimnames(misestimates)<-list(1:1000,dimnames(syntheticcpspopsHA)[c(1,3,4)])
+dimnames(misestimates)<-list(1:dimnames(misestimates)[1],dimnames(syntheticcpspopsHA)[c(1,3,4)])
 names(dimnames(misestimates))<-c("i","m","j","s","y")
 Hmisc::label(misestimates)<-"Month in sample estimate for longitudinal sample i, month m, rotation group mis j, synthetisation procedure s, employment statys y"
 
