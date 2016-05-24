@@ -17,7 +17,7 @@ mis<-function(i,m,misi,syntheticcpspopsA){apply(syntheticcpspopsA[,samplerule(i,
 #system.time(misestimates<-plyr::maply(expand.grid(i=1:20,m=1:85,misi=1:8),misH,syntheticcpspopsHA=syntheticcpspopsHA))
 
 
-mis(1,2,1,syntheticcpspopsHA)
+#mis(1,2,1,syntheticcpspopsHA)
 roundv<-function(n,x){y<-floor(n*x);y[length(x)]<-n-sum(y[-length(x)]);y}
 rectif<-function(varr,prob_1){
   N<-length(varr)
