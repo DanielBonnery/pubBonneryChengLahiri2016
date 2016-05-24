@@ -12,27 +12,26 @@ crossTotals<-pubBonneryChengLahiri2016::CountsChangePumlrR
 
 syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
 
-syntheticcpspopsA<-plyr::laply(syntheticcpspops,list.tablespopAf,.parallel=TRUE)
+syntheticcpspopsHA<-plyr::laply(syntheticcpspops,list.tablespopAf)
+dimnames(syntheticcpspopsHA)<-
 gc()
 
 #Draw all probable samples
-Allsamples<-Allsamplesf(dimnames(Totals)$month)
-AllsamplesH<-Allsamples[,((0:159)*5)+1,]-1/5+1
+#Allsamples<-Allsamplesf(dimnames(Totals)$month)
+#AllsamplesH<-Allsamples[,((1:160)*5),]/5
 #Computation of month in sample totals.
 
-system.time(list.tablesA<-plyr::laply(syntheticcpspopsA,list.tablesAf,ToussamplesH=AllsamplesH,.parallel=TRUE))
+#list.tablesA<-list.tablesAf(syntheticcpspopsHA,AllsamplesH)
+misestimates<-125*plyr::maply(expand.grid(i=1:1000,m=1:85,misi=1:8),misH,syntheticcpspopsHA=syntheticcpspopsHA,.progress="text")
+dimnames(misestimates)<-list(1:1000,dimnames(syntheticcpspopsHA)[c(1,3,4)])
+names(dimnames(misestimates))<-c("i (longitudinal sample)", "m (month)","j (month in sample)","Employment status")
+Hmisc::label(misestimates)<-"Month in sample estimate for longitudinal sample i, month m, rotation group mis j"
 
-    dd<-dim(list.tablesA)
-    mis<-array(list.tablesA,c(dd[1]/8,8,dd[2:4]))
-    mistotalscomp<-aperm(8*125*apply(mis,2:5,sum),c(3,1,2,4))[,8:1,,]
-    dimnames(mistotalscomp)[[1]]<-tables.entree
-    dimnames(mistotalscomp)[[2]]<-paste0("hrmis",1:8)
-    dimnames(mistotalscomp)[[3]]<-dimnames(list.tablesA)[[2]]
-    dimnames(mistotalscomp)[[4]]<-paste0("rep",1:nrep)
-    mistotalscomp<-mistotalscomp[,,listpumlrR,]
-    eval(parse(text=Sauve("mistotalscomp",adde2)))
-    mtc<-array(aperm(mistotalscomp,c(3,2,1,4)),c(prod(dim(mistotalscomp)[1:3]),dim(mistotalscomp)[4]))
-    eval(parse(text=Sauve("mtc",adde2)))})}
+
+#Computation of direct estimator
+#First method:
+Direct<-plyr::aaply(misestimates,c(),mean)
+#second method
 
 
 

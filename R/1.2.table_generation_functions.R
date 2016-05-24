@@ -1,3 +1,23 @@
+
+samplerule<-function(i,j,m){((5*(m-1)+
+                                5*(i-1)+
+                                5000*((j-1)%/%5)+((j-1)%%5)+5*((j-1)%/%100)+40*((j-1)%/%400)))%%100000+1}
+sampleruleH<-function(i,j,m){(((m-1)+
+                                (i-1)+
+                                1000*((j-1))+((j-1)%/%20)+8*((j-1)%/%80)))%%20000+1}
+
+misH<-function(i,m,misi,syntheticcpspopsHA){apply(syntheticcpspopsHA[,sampleruleH(i,(8-misi)*20+(1:20),m),,m],c(1,3),sum)}
+
+mis<-function(i,m,misi,syntheticcpspopsA){apply(syntheticcpspopsA[,samplerule(i,(8-misi)*20+(1:20),m),,m],c(1,3),sum)}
+
+
+#system.time(misestimates<-plyr::maply(expand.grid(i=1:3,m=1:85,misi=1:8),mis,syntheticcpspopsA=syntheticcpspopsA,.parallel=TRUE))
+#system.time(misestimates<-plyr::maply(expand.grid(i=1:3,m=1:85,misi=1:8),mis,syntheticcpspopsA=syntheticcpspopsA))
+#system.time(misestimates<-plyr::maply(expand.grid(i=1:20,m=1:85,misi=1:8),misH,syntheticcpspopsHA=syntheticcpspopsHA,.parallel=TRUE))
+#system.time(misestimates<-plyr::maply(expand.grid(i=1:20,m=1:85,misi=1:8),misH,syntheticcpspopsHA=syntheticcpspopsHA))
+
+
+mis(1,2,1,syntheticcpspopsHA)
 roundv<-function(n,x){y<-floor(n*x);y[length(x)]<-n-sum(y[-length(x)]);y}
 rectif<-function(varr,prob_1){
   N<-length(varr)
@@ -20,7 +40,7 @@ changevar<-function(varr,prob2=NULL,prob,iterative.synthetic.model="Independent"
   rectif(var2,prob)
   }
 
-
+d
 syntheticcpsdataset<-
   function(Totals=NULL,
            crossTotals=NULL,
@@ -155,7 +175,7 @@ ChargetablespopA<-function(){
   save(tablespopA,file=paste0(tablesfolder,"/tablespopA.Rdata"))
 }
 
-list.tablespopAf<-function(list.tablespop){
+list.tablespopHAf<-function(list.tablespop){
   list.tablespopA<-
     array(unlist(lapply(list.tablespop,function(l){
       apply(array(

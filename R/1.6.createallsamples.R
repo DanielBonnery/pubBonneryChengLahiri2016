@@ -68,7 +68,7 @@ Allsamplesf<-function(months=NULL,
                                 function(i){monthinsample8s[,,(1+i):(85+i)]}),along=2))
   names(dimnames(Toussamples))<-c("i (longitudinal sample)","j (sample element index)","m (month)")
   dimnames(Toussamples)<-list(1:nrep,
-                              paste0("mis - ", rep(8:1,each=cluster.single.sample.size*cluster.size),
+                              paste0("mis: ", rep(8:1,each=cluster.single.sample.size*cluster.size),", id:",
                                      rep(1:cluster.single.sample.size*cluster.size,8)),
                               months)
   Hmisc::label(Toussamples)<-c("Population index for selected element of sample index j in month m and longitudinal sample i")
@@ -90,11 +90,11 @@ ToussamplesHf<-function(){
 
 
 #ToussamplesHf()
-list.tablesAf<-function(list.tablespopA,AllsamplesH){
-  plyr::maply(1:dim(Allsamples)[1],function(i){
-    plyr::maply(1:dim(Allsamples)[3],function(j){
-      list.tablespopA[Allsamples[i,,j],,j]})})}
-
+list.tablesAf<-function(syntheticcpspopsHA,AllsamplesH){
+  mis<-list(factor(rep(8:1,each=20)))
+  plyr::maply(1:dim(AllsamplesH)[1],function(i){
+    plyr::maply(1:dim(AllsamplesH)[3],function(j){
+      syntheticcpspopsHA[,AllsamplesH[i,,j],,j]})})}
 
 
 
