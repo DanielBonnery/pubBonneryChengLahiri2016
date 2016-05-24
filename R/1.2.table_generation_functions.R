@@ -41,7 +41,7 @@ changevar<-function(varr,prob2=NULL,prob,iterative.synthetic.model="Independent"
   }
 
 syntheticcpsdataset<-
-  function(Totals=NULL,
+  function(Totals,
            crossTotals=NULL,
            cluster.size=5,
            cluster.all.sample.rate=1/10,
@@ -50,8 +50,7 @@ syntheticcpsdataset<-
            iterative.synthetic.models=c("Independent","2dorder","2dorder-indexdependent")){
     if(is.null(Totals)){
       Totals=plyr::aaply(1:85,1,function(x){y=runif(3);y/sum(y)})}
-    L=if(!is.null(names(Totals)[[1]])){names(Totals)[[1]]}else{dim(Totals)[[1]]}
-    
+    L=nrow(Totals)
     nb.samples<-L+15
     cluster.single.sample.rate <-cluster.all.sample.rate/nb.samples
     N<-cluster.size*
@@ -95,6 +94,7 @@ syntheticcpsdataset<-
           pumlrRlag   =Popu$pumlrR,
           pumlrR      =changevar(Popu2$pumlrR,prob2[i-1,,],prob[i,],iterative.synthetic.model=j))
         list.tablespop<-c(list.tablespop,list(Popu2))}
+      names(list.tablespop)<-dimnames(Totals)$month
       Hmisc::label(list.tablespop,paste0('Synthetic "CPS populations" datasets, ',j," method"))
       list.tablespop})
     names(LL)<-iterative.synthetic.models
@@ -174,7 +174,7 @@ ChargetablespopA<-function(){
   save(tablespopA,file=paste0(tablesfolder,"/tablespopA.Rdata"))
 }
 
-list.tablespopHAf<-function(list.tablespop){
+syntheticccpspopHAf<-function(list.tablespop){
   list.tablespopA<-
     array(unlist(lapply(list.tablespop,function(l){
       apply(array(
@@ -182,6 +182,7 @@ list.tablespopHAf<-function(list.tablespop){
               pumlrR_n1=l$pumlrR=="1",
               pumlrR_n_1=l$pumlrR=="_1")*1,c(5,20000,3)),2:3,sum)})),c(20000,3,length(list.tablespop)))
   dimnames(list.tablespopA)[2:3]<-list(c("0","1","_1"),names(list.tablespop))
+  names(dimnames(list.tablespopA))<-c("h","y","m")
   list.tablespopA}
 
 
