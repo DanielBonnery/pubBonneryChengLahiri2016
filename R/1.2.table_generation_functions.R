@@ -40,7 +40,6 @@ changevar<-function(varr,prob2=NULL,prob,iterative.synthetic.model="Independent"
   rectif(var2,prob)
   }
 
-d
 syntheticcpsdataset<-
   function(Totals=NULL,
            crossTotals=NULL,
