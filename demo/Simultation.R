@@ -1,40 +1,46 @@
 #1. Load libraries
 library(CompositeRegressionEstimation)
 library(pubBonneryChengLahiri2016)
-
-library(doParallel)
 library(plyr)
 
-nodes <- detectCores()
-cl <- makeCluster(nodes)
-registerDoParallel(cl)
+#library(doParallel)
 
-#2. 
+#nodes <- detectCores()
+#cl <- makeCluster(nodes)
+#registerDoParallel(cl)
+#on.exit(stopCluster(cl))
+#2. Create synthetic populations
+#2.1. Create 3 synthetic populations.
 syntheticcpspops<-syntheticcpsdataset(pubBonneryChengLahiri2016::CPSTotals,
                                       pubBonneryChengLahiri2016::CountsChangePumlrR)
-
+#2.2. Aggregation of employment status by household and save in an array
 syntheticcpspopsHA<-plyr::laply(syntheticcpspops,syntheticccpspopHAf,.progress="text")
 names(dimnames(syntheticcpspopsHA))[1]<-c("s")
 dimnames(syntheticcpspopsHA)[1]<-list(names(syntheticcpspops))
 Hmisc::label(syntheticcpspopsHA)<-"Total for household h, synthetisation method z, employment status y, and month m"
-
-# Computation of population totals
-Populationtotals<-plyr::aaply(syntheticcpspopsHA,c(1,3:4),sum)
-Hmisc::label(Populationtotals)<-"Total for synthetisation method z, employment status y, and month m"
+save(syntheticcpspops,file=file.path(tempdir() ,"syntheticcpspops.rda"))
+rm(syntheticcpspops)
 gc()
+#2.3. Computation of (true) population totals
+Populationtotals<-plyr::aaply(syntheticcpspopsHA,c(1,3:4),sum,.progress="text")#.parallel=TRUE)
+Hmisc::label(Populationtotals)<-"Total for synthetisation method z, employment status y, and month m"
 
+#stopCluster(cl)
+
+
+#2.4. Estimation (for more details, see misH function)
 #list.tablesA<-list.tablesAf(syntheticcpspopsHA,AllsamplesH)
-misestimates<-800*plyr::maply(expand.grid(i=1:1000,m=1:85,misi=1:8),misH,syntheticcpspopsHA=syntheticcpspopsHA,.progress="text")
+misestimates<-800*plyr::maply(expand.grid(i=1:1000,m=1:85,misi=1:8),misH,syntheticcpspopsHA=syntheticcpspopsHA,.progress="text")#.parallel=TRUE)
 dimnames(misestimates)[[2]]<-dimnames(syntheticcpspopsHA)[[4]]
 names(dimnames(misestimates))<-c("i","m","j","s","y")
 Hmisc::label(misestimates)<-"Month in sample estimate for longitudinal sample i, month m, rotation group mis j, synthetisation procedure s, employment statys y"
+gc()
 
-#Computation of direct estimator
-#First method:
+#2.5. Computation of direct estimator
 Direct<-plyr::aaply(misestimates,c(1:2,4:5),sum,.progress="text")
 
 
-# Computation of Sigma          
+#2.6. Computation of Sigma          
 Sigmas<-plyr::aaply(misestimates,4,function(x){
     Sigma=array(var(array(x,
                             c(dim(x)[1],prod(dim(x)[2:4])))),
@@ -52,7 +58,7 @@ coeffYF<-plyr::aaply(Sigmas,1,function(Sigma){CoeffYF(Sigma)},.progress="text")
 
 
 ####################################################
-coeffAK3s<-plyr::aaply(1:3,1,function(i){bestAK3(Sigmas[i,,,,,,],Populationtotals[i,,,])})
+coeffAK3s<-plyr::aaply(1:3,1,function(i){bestAK3(Sigmas[i,,,,,,],Populationtotals[i,,])})
 coeffAK3sconstraint<-plyr::aaply(1:3,1,function(i){bestAK3constraint(Sigmas[i,,,,,,],Populationtotals[i,,,])})
 ####################################################
 # Computation of CPS coefficients

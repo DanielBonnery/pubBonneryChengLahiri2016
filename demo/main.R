@@ -1,82 +1,15 @@
 #library("CompositeRegressionEstimation)
 
-rm(list=ls())
-options(max.print=100,continue=" ")
-wd1<-"/home/daniel/Dropbox/CensusBAE/Composite_estimation/R/Computation of FR"
-wd2<-"C:/Documents and Settings/dbonnery/My Documents/Dropbox/CensusBAE/Composite_estimation/R/Computation of FR"
-wd3<-"H:/Travail/R_programs"
-wd4<-"/cpsbranch/temp/dbonnery"
-wd5<-"/afs/glue.umd.edu/home/glue/d/b/dbonnery/home/Composite/programmes"
-for(i in 1:5){if(file.exists(get(paste("wd",i,sep="")))){setwd(get(paste("wd",i,sep="")))}}
-PC=getwd()!=wd4
-wd1t<-wd1==getwd()
-wd2t<-wd2==getwd()
-wd3t<-wd3==getwd()
-wd4t<-wd4==getwd()
-wd5t<-wd5==getwd()
-
-if(PC){startingstep<-7}
-if(!PC){startingstep<-7}
-
-steps<-1:6>=startingstep
-names(steps)<-
-  c("Create package",
-    "Get data",
-    "Import, convert, and save data",
-    "Compute Calibration totals",
-    "Compute total estimates",
-    "Analysis")
-
 if(PC){nrep <- 1000}
 
-if(!PC|wd5t){
-  paste0<-function(...,collapse=NULL)
-  {paste(...,collapse=collapse,sep="")}
-}
-if(PC){
-  progfolder<-getwd()
-  CREfolder<-paste0(getwd(),"/package/CRE/R")
-  Resultsfolder<-"/home/daniel/R/Resultats"
-  if(wd5t){Resultsfolder<-paste0(getwd(),"/../Resultats")}
-  #Resultsfolder<-"/home/daniel/R/Ressauv"
-  tablesfolder<-"/home/daniel/R/tables"
-  if(wd5t){tablesfolder<-paste0(getwd(),"/../tables")}}
-if(!PC){
-  progfolder<-"/home/b/bonne329/R_programs"
-  CREfolder<-"/home/b/bonne329/R_programs/package/cre/r"
-  Resultsfolder<-"/home/b/bonne329/R_programs/Resultats"
-  tablesfolder<-"/cpsbranch/temp/dbonnery"}
-wd<-getwd()
-#if(PC){load(".RData")}
-##-----------------------------------------------------------------
-#Create packages
-if(steps[1]){
-  if(wd %in%c(wd1,wd2)){
-    source(paste(getwd(),"0.creepackage.R",sep="/"))
-    generepaquet(getwd())}}
-##---------------------------------------------------------------
-#Load source files and packages
-
-
-usePackages <- function(p,...) {
-  if(wd5t){
-    if (!is.element(p, c(installed.packages()[,1],installed.packages(lib.loc="R/packages/")[,1]))){
-      install.packages(p,dep = TRUE,lib="R/packages/", ...)}
-    require(p, character.only = TRUE,lib="R/packages/")}
-  else{
-      if (!is.element(p, installed.packages()[,1])){
-        install.packages(p,dep = TRUE, ...)}
-      require(p, character.only = TRUE)}}
-if(!wd5t){usePackages('sampling')}
-if(PC&!wd5t){
-  usePackages("abind")
-  usePackages("optimx")
-  usePackages("Matrix")
-  usePackages("Hmisc")
-  usePackages("MASS")
-  require(multicore)
-  usePackages('filehash') 
-  usePackages('tikzDevice', repos='http://r-forge.r-project.org', type='source') 
+library('sampling')
+library("abind")
+  library("optimx")
+  library("Matrix")
+  library("Hmisc")
+  library("MASS")
+  library('filehash') 
+  library('tikzDevice', repos='http://r-forge.r-project.org', type='source') 
 }
 #if(!wd5t){bdiag2<-function(nmonth,XX){as.matrix(.bdiag(lapply(1:nmonth,function(i){XX})))}}
 

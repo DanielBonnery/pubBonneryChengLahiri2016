@@ -1,3 +1,0 @@
-calculetaux<-function(){
-
- }
