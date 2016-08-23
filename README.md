@@ -24,7 +24,7 @@ Here we give the programs we used to compute the estimates on the Census data, a
 
 ```r
 library("pubBonneryChengLahiri2016")
-demo(Simulation)
+demo(ComputeestimatesonCPSwebdata)
 ```
 
 ### 2.3. Results
