@@ -23,7 +23,7 @@ Here we give the programs we used to compute the estimates on the Census data, a
 
 
 ```r
-library("DanielBonnery/pubBonneryLahiriCheng2016")
+library("pubBonneryChengLahiri2016")
 demo(Simulation)
 ```
 
@@ -31,5 +31,40 @@ demo(Simulation)
 
 
 
+### 2.3.1. Figure 2.a.
 
+```r
+print(figure2.a)
+```
+
+![plot of chunk fig2a](figure/fig2a-1.png)
+
+
+### 2.3.2. Figure 2.b.
+
+```r
+print(figure2.b)
+```
+
+![plot of chunk fig2b](figure/fig2b-1.png)
+
+
+## 3. Reproduction of the simulations made on CPS data. 
+
+
+### 3.1 R code
+
+
+```r
+library("DanielBonnery/pubBonneryLahiriCheng2016")
+demo(Simulation)
+```
+
+### 3.2. Results
+
+### 3.2.1.
+
+### 3.2.2.
+
+### 3.2.3.
 
