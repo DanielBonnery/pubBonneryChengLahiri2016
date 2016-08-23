@@ -1,9 +1,7 @@
-# Working document 
-`pubBonneryChengLahiri2016` is an R package that contains the source code to reproduce the graphs and simulations of different documents, 
+# Multivariate Composite Estimation with An Application to the U.S. Labor Force Statistics 
+`pubBonneryChengLahiri2016` is an R package that contains the source code to reproduce the graphs and simulations of different documents, including
 * ["Multivariate Composite Estimation with An Application to the
-U.S. Labor Force Statistics"]() by Bonnery, Cheng and Lahiri (see Section 3.2. below).
-* 
-*
+U.S. Labor Force Statistics"]() by Bonnery, Cheng and Lahiri (see Section 2 and 3. below).
 
 ## 1. How to install the package
 
@@ -12,12 +10,26 @@ devtools::install_github("DanielBonnery/pubBonneryLahiriCheng2016")
 ```
 
 Note that this package depends on different packages I developped, that will be installed automatically, including:
-* [CompositeRegressionEstimation](https://github.com/DanielBonnery/CompositeRegressionEstimation)
-* [dataCPS](https://github.com/DanielBonnery/dataCPS)
+* [CompositeRegressionEstimation](https://github.com/DanielBonnery/CompositeRegressionEstimation). CompositeRegressionEstimation is a package that contains generic functions to compute composite regression estimators, AK estimators, Empirical best linear estimators.
+* [dataCPS](https://github.com/DanielBonnery/dataCPS). dataCPS is a package that contains tools to download the public use data files related to CPS from the Census Bureau website and convert them to R data frames.
 
-## 2. A note on the data.
 
-## 3. How to reproduce the simulations. 
+## 2. Reproduction of the computation made on CPS data. 
 
-### 3.1 
+### 2.1. Note on the data 
+Here we give the programs we used to compute the estimates on the Census data, and we apply those programs to the CPS data that is published on the web by the Census. Differences between web data and data we had access to when we were working at the Census may exist and explain the differences we can see.
+
+### 2.2. Execution
+
+
+```r
+library("DanielBonnery/pubBonneryLahiriCheng2016")
+demo(Simulation)
+```
+
+### 2.3. Results
+
+
+
+
 
