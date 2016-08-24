@@ -4,7 +4,7 @@ library(pubBonneryChengLahiri2016)
 library(plyr)
 library(dataCPS)
 #library(doParallel)
-
+resultsfolder<-if(!file.exists("datanotpushed")){"datanotpushed"}else{tempdir()}
 
 #nodes <- detectCores()
 #cl <- makeCluster(nodes)
@@ -41,7 +41,7 @@ syntheticcpspopsHA<-plyr::laply(syntheticcpspops,syntheticccpspopHAf,.progress="
 names(dimnames(syntheticcpspopsHA))[1]<-c("s")
 dimnames(syntheticcpspopsHA)[1]<-list(names(syntheticcpspops))
 Hmisc::label(syntheticcpspopsHA)<-"Total for household h, synthetisation method z, employment status y, and month m"
-save(syntheticcpspops,file=file.path(tempdir() ,"syntheticcpspops.rda"))
+save(syntheticcpspops,file=file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
 rm(syntheticcpspops)
 gc()
 #2.3. Computation of (true) population totals
@@ -58,10 +58,10 @@ dimnames(misestimates)[[2]]<-dimnames(syntheticcpspopsHA)[[4]]
 names(dimnames(misestimates))<-c("i","m","j","s","y")
 Hmisc::label(misestimates)<-"Month in sample estimate for longitudinal sample i, month m, rotation group mis j, synthetisation procedure s, employment statys y"
 gc()
-
+save(misestimates,file=file.path(resultsfolder ,"Simu_misestimates.rda"))
 #2.5. Computation of direct estimator
 Direct<-plyr::aaply(misestimates,c(1:2,4:5),sum,.progress="text")
-save(Direct,file=file.path(tempdir() ,"Direct.rda"))
+save(Direct,file=file.path(resultsfolder ,"Simu_Direct.rda"))
 
 
 #2.6. Computation of Sigma          
@@ -72,12 +72,12 @@ Sigmas<-plyr::aaply(misestimates,4,function(x){
     dimnames(Sigma)<-rep(dimnames(x)[2:4],2)
     names(dimnames(Sigma))<-paste0(names(dimnames(Sigma)),rep(1:2,each=3))
     Sigma},.progress="text")
-save(Sigmas,file=file.path(tempdir() ,"Sigmas.rda"))
+save(Sigmas,file=file.path(resultsfolder ,"Simu_Sigmas.rda"))
 
 # Computation of coefficients for Best linear estimates (Yansaneh fuller)
 
 coeffYF<-plyr::aaply(Sigmas,1,function(Sigma){CoeffYF(Sigma)},.progress="text")
-save(coeffYF,file=file.path(tempdir() ,"coeffYF.rda"))
+save(coeffYF,file=file.path(resultsfolder ,"Simu_coeffYF.rda"))
 
 
 # Computation of coefficients Best AK estimator
@@ -85,6 +85,8 @@ save(coeffYF,file=file.path(tempdir() ,"coeffYF.rda"))
 
 ####################################################
 coeffAK3s<-plyr::aaply(1:3,1,function(i){bestAK3(Sigmas[i,,,,,,],t(Populationtotals[i,,]))})
+save(coeffAK3s,file=file.path(resultsfolder ,"Simu_coeffYF.rda"))
+
 coeffAK3sconstraint<-plyr::aaply(1:3,1,function(i){bestAK3constraint(Sigmas[i,,,,,,],Populationtotals[i,,,])})
 ####################################################
 # Computation of CPS coefficients
@@ -94,7 +96,6 @@ coeffAK3sconstraint<-plyr::aaply(1:3,1,function(i){bestAK3constraint(Sigmas[i,,,
   ak3all<-lapply(X,function(x){y<-floor(x*10^(1:n));y<-(y-10*c(0,y[1:(n-1)]))/10;c(y[1:2],0,y[3],1,0)})
   names(ak3all)<-paste0("AK3_",0:10^n)
   
-  ak3CPS<-list(CPS=c(.3,.4,0,.4,.7,0))
 
 ####################################################  
 #Computation of linear estimators
