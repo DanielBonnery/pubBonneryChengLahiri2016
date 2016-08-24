@@ -62,18 +62,22 @@ demo(Simulation)
 
 ### 3.2. Results
 
-### 3.2.1. Table 1
+### 3.2.1. Figure 1
 
-### 3.2.2. Figure 1
+```r
+print(1)
+```
+### 3.2.2. Table 2
 
-### 3.2.3. Table 2
 
-### 3.2.3. Table 3
 
-### 3.2.4. Table 4
 
-### 3.2.4. Table 5
 
-### 3.2.4. Table 6
 
-### 3.2.4. Table 7
+
+
+
+
+
+
+
