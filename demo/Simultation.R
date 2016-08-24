@@ -63,7 +63,6 @@ save(misestimates,file=file.path(resultsfolder ,"Simu_misestimates.rda"))
 Direct<-plyr::aaply(misestimates,c(1:2,4:5),sum,.progress="text")
 save(Direct,file=file.path(resultsfolder ,"Simu_Direct.rda"))
 
-
 #2.6. Computation of Sigma          
 Sigmas<-plyr::aaply(misestimates,4,function(x){
     Sigma=array(var(array(x,
@@ -88,14 +87,6 @@ coeffAK3s<-plyr::aaply(1:3,1,function(i){bestAK3(Sigmas[i,,,,,,],t(Populationtot
 save(coeffAK3s,file=file.path(resultsfolder ,"Simu_coeffYF.rda"))
 
 coeffAK3sconstraint<-plyr::aaply(1:3,1,function(i){bestAK3constraint(Sigmas[i,,,,,,],Populationtotals[i,,,])})
-####################################################
-# Computation of CPS coefficients
-####################################################
-  n=3
-  X=seq(0,1,length=10^n+1)
-  ak3all<-lapply(X,function(x){y<-floor(x*10^(1:n));y<-(y-10*c(0,y[1:(n-1)]))/10;c(y[1:2],0,y[3],1,0)})
-  names(ak3all)<-paste0("AK3_",0:10^n)
-  
 
 ####################################################  
 #Computation of linear estimators
