@@ -2,17 +2,40 @@
 library(CompositeRegressionEstimation)
 library(pubBonneryChengLahiri2016)
 library(plyr)
-
+library(dataCPS)
 #library(doParallel)
+
 
 #nodes <- detectCores()
 #cl <- makeCluster(nodes)
 #registerDoParallel(cl)
 #on.exit(stopCluster(cl))
 #2. Create synthetic populations
+#2.0. Estimate counts from CPS web data.
+allmonths <- format(seq(as.Date("20050101", "%Y%m%d"),
+                        as.Date("20120101", "%Y%m%d"),
+                        by="month"), "%Y%m")
+names(allmonths)<-allmonths
+list.tablesweb<-plyr::alply(allmonths,1,function(x){
+  eval(parse(text=paste0("data(cps",x,")")))
+  y<-get(paste0("cps",x))
+  y$pemlrR<-rep(c("1","0","_1"),c(2,2,4))[factor(y$pemlr,levels=c(1:7,"-1"))]
+  y[	y$hrintsta=="1" & y$prpertyp %in% c("1","2"), ]
+  y$employed=y$pemlrR=="1";y$unemployed=y$pemlrR=="0";
+  y[,c("hrhhid","peage","pesex","pulineno","pehspnon","pemlr","pwsswgt","pwcmpwgt","pemlrR","hrmis","employed","unemployed")]
+},.progress = "text")
+rm(list=grep("cps",ls(),value=TRUE))
+names(list.tablesweb)<-allmonths
+
+Totals<-WS(list.tablesweb,list.y = "pemlrR",weight ="pwsswgt" )
+dimnames(Totals)[[2]]<-substr(dimnames(Totals)[[2]],9,10)
+
+crossTotals<-douuble (list.tablesweb,
+                    w="pwsswgt",
+                    id=c("hrhhid","pulineno"),list.y="pemlrR")$N01
+rm(list.tablesweb);gc()
 #2.1. Create 3 synthetic populations.
-syntheticcpspops<-syntheticcpsdataset(pubBonneryChengLahiri2016::CPSTotals,
-                                      pubBonneryChengLahiri2016::CountsChangePumlrR)
+syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
 #2.2. Aggregation of employment status by household and save in an array
 syntheticcpspopsHA<-plyr::laply(syntheticcpspops,syntheticccpspopHAf,.progress="text")
 names(dimnames(syntheticcpspopsHA))[1]<-c("s")
@@ -38,6 +61,7 @@ gc()
 
 #2.5. Computation of direct estimator
 Direct<-plyr::aaply(misestimates,c(1:2,4:5),sum,.progress="text")
+save(Direct,file=file.path(tempdir() ,"Direct.rda"))
 
 
 #2.6. Computation of Sigma          
@@ -48,17 +72,19 @@ Sigmas<-plyr::aaply(misestimates,4,function(x){
     dimnames(Sigma)<-rep(dimnames(x)[2:4],2)
     names(dimnames(Sigma))<-paste0(names(dimnames(Sigma)),rep(1:2,each=3))
     Sigma},.progress="text")
-    
+save(Sigmas,file=file.path(tempdir() ,"Sigmas.rda"))
+
 # Computation of coefficients for Best linear estimates (Yansaneh fuller)
 
 coeffYF<-plyr::aaply(Sigmas,1,function(Sigma){CoeffYF(Sigma)},.progress="text")
+save(coeffYF,file=file.path(tempdir() ,"coeffYF.rda"))
 
 
 # Computation of coefficients Best AK estimator
 
 
 ####################################################
-coeffAK3s<-plyr::aaply(1:3,1,function(i){bestAK3(Sigmas[i,,,,,,],Populationtotals[i,,])})
+coeffAK3s<-plyr::aaply(1:3,1,function(i){bestAK3(Sigmas[i,,,,,,],t(Populationtotals[i,,]))})
 coeffAK3sconstraint<-plyr::aaply(1:3,1,function(i){bestAK3constraint(Sigmas[i,,,,,,],Populationtotals[i,,,])})
 ####################################################
 # Computation of CPS coefficients

@@ -93,15 +93,15 @@ Estimates_all_change_rel_webD$Month<-as.Date(paste0(Estimates_all_change_rel_web
 #7. Create figure 2 of "Multivariate Composite Estimation with An Application to the U.S. Labor Force Statistics"
 figure2.a<-ggplot(data=Estimates_all_rel_webD[Estimates_all_rel_webD$Variable=="r"&
                                  is.element(Estimates_all_rel_webD$Estimator,c("MR0","MR1","MR0.75","AK")),],
-       aes(x=Month,y=value)) + geom_line(aes(color=Estimator))+ scale_y_continuous("Unemployment rate") +
+       aes(x=Month,y=value)) + geom_line(aes(color=Estimator))+ scale_y_continuous("Unemployment rate",labels = scales::percent)
   scale_x_date(date_breaks = "1 year", date_minor_breaks = "1 month", date_labels="%Y")+xlab("Time") 
 
 
 figure2.b<-ggplot(data=Estimates_all_change_rel_webD[Estimates_all_change_rel_webD$Variable=="r"&
                                                 is.element(Estimates_all_change_rel_webD$Estimator,c("MR0","MR1","MR0.75","AK")),],
-                  aes(x=Month,y=value)) + geom_line(aes(color=Estimator))+ scale_y_continuous("Unemployment rate") +
+                  aes(x=Month,y=value)) + geom_line(aes(color=Estimator))+ scale_y_continuous("Unemployment rate",labels = scales::percent) +
   scale_x_date(date_breaks = "1 year", date_minor_breaks = "1 month", date_labels="%Y")+xlab("Time") 
 
 
-#save(figure2.a,figure2.b,file="data/tablesandfigures.rda")
+
 
