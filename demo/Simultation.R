@@ -4,7 +4,7 @@ library(pubBonneryChengLahiri2016)
 library(plyr)
 library(dataCPS)
 #library(doParallel)
-resultsfolder<-if(!file.exists("datanotpushed")){"datanotpushed"}else{tempdir()}
+resultsfolder<-if(file.exists("datanotpushed")){"datanotpushed"}else{tempdir()}
 
 #nodes <- detectCores()
 #cl <- makeCluster(nodes)
@@ -29,24 +29,27 @@ names(list.tablesweb)<-allmonths
 
 Totals<-WS(list.tablesweb,list.y = "pemlrR",weight ="pwsswgt" )
 dimnames(Totals)[[2]]<-substr(dimnames(Totals)[[2]],9,10)
-
+save(Totals,file=file.path(resultsfolder,"Simu_Totals.rda"))
 crossTotals<-douuble (list.tablesweb,
                     w="pwsswgt",
                     id=c("hrhhid","pulineno"),list.y="pemlrR")$N01
+save(crossTotals,file=file.path(resultsfolder,"Simu_Totals.rda"))
 rm(list.tablesweb);gc()
 #2.1. Create 3 synthetic populations.
 syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
+save(syntheticcpspops,file=file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
+rm(Totals,crossTotals)
 #2.2. Aggregation of employment status by household and save in an array
 syntheticcpspopsHA<-plyr::laply(syntheticcpspops,syntheticccpspopHAf,.progress="text")
 names(dimnames(syntheticcpspopsHA))[1]<-c("s")
 dimnames(syntheticcpspopsHA)[1]<-list(names(syntheticcpspops))
 Hmisc::label(syntheticcpspopsHA)<-"Total for household h, synthetisation method z, employment status y, and month m"
-save(syntheticcpspops,file=file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
 rm(syntheticcpspops)
 gc()
 #2.3. Computation of (true) population totals
 Populationtotals<-plyr::aaply(syntheticcpspopsHA,c(1,3:4),sum,.progress="text")#.parallel=TRUE)
 Hmisc::label(Populationtotals)<-"Total for synthetisation method z, employment status y, and month m"
+save(Populationtotals,file=file.path(resultsfolder ,"Simu_Populationtotals.rda"))
 
 #stopCluster(cl)
 
@@ -62,7 +65,6 @@ save(misestimates,file=file.path(resultsfolder ,"Simu_misestimates.rda"))
 #2.5. Computation of direct estimator
 Direct<-plyr::aaply(misestimates,c(1:2,4:5),sum,.progress="text")
 save(Direct,file=file.path(resultsfolder ,"Simu_Direct.rda"))
-
 #2.6. Computation of Sigma          
 Sigmas<-plyr::aaply(misestimates,4,function(x){
     Sigma=array(var(array(x,
@@ -72,134 +74,49 @@ Sigmas<-plyr::aaply(misestimates,4,function(x){
     names(dimnames(Sigma))<-paste0(names(dimnames(Sigma)),rep(1:2,each=3))
     Sigma},.progress="text")
 save(Sigmas,file=file.path(resultsfolder ,"Simu_Sigmas.rda"))
-
+#load(file.path(resultsfolder,"Simu_Sigmas.rda"))
 # Computation of coefficients for Best linear estimates (Yansaneh fuller)
 
-coeffYF<-plyr::aaply(Sigmas,1,function(Sigma){CoeffYF(Sigma)},.progress="text")
-save(coeffYF,file=file.path(resultsfolder ,"Simu_coeffYF.rda"))
+YF_coeffs<-plyr::aaply(Sigmas,1,function(Sigma){CoeffYF(Sigma)},.progress="text")
+names(dimnames(YF_coeffs)[[1]])<-dimnames(YF_coeffs)[[1]]
+save(YF_coeffs,file=file.path(resultsfolder ,"Simu_YF_coeffs.rda"))
 
 
 # Computation of coefficients Best AK estimator
 
 
 ####################################################
+#
+load(file.path(resultsfolder,"Simu_Sigmas.rda"))
+load(file.path(resultsfolder,"Simu_Populationtotals.rda"))
 coeffAK3s<-plyr::aaply(1:3,1,function(i){bestAK3(Sigmas[i,,,,,,],t(Populationtotals[i,,]))})
-save(coeffAK3s,file=file.path(resultsfolder ,"Simu_coeffYF.rda"))
+save(coeffAK3s,file=file.path(resultsfolder ,"Simu_coeffAK3.rda"))
 
-coeffAK3sconstraint<-plyr::aaply(1:3,1,function(i){bestAK3constraint(Sigmas[i,,,,,,],Populationtotals[i,,,])})
+coeffAK3sconstraint<-plyr::aaply(1:3,1,function(i){
+  bestAK3contraint(Sigmas[i,,,,,,],t(Populationtotals[i,,]))})
+save(coeffAK3sconstraint,file=file.path(resultsfolder ,"Simu_coeffAK3.rda"))
 
 ####################################################  
 #Computation of linear estimators
   #YF
-  YFcomprep<-aperm(array(apply(mtc,2,function(X){coeffYF%*%X}),c(1,3,nmonth,nrep)),c(3,2,1,4))
-  YFcomprep<-addU(YFcomprep)[,studyvar,,,drop=FALSE]
+load(file.path(resultsfolder ,"Simu_misestimates.rda"))
+load(file.path(resultsfolder ,"Simu_YF_coeffs.rda"))
 
-####################################################
-if(is.element("AK3",what)){
-  charge("ak3CPS");
-  charge("ak3S2")
-  sapply(list.adde2bis,function(adde2){
-    charge(paste0("ak3",adde2))
-    charge(paste0("ak3c",adde2))
-    charge(paste0("ak3sep",adde2))
-    ak<-c(ak3,ak3c,ak3sep,ak3CPS,ak3S2)
-    coeffAK<-CoeffAK3(nmonth,ak)
-    charge(paste0("mtc",adde2))
-    AK3comprep<-aperm(array(apply(mtc,2,function(X){apply(coeffAK,3,function(coeff){coeff%*%X})}),c(3,nmonth,length(ak)      ,nrep)),c(2,1,3,4))
-    dimnames(AK3comprep)<-list(tables.entree,listpumlrR,paste0("AK3_",names(ak)),paste0("rep",1:nrep))
-    AK3comprep<-addU(AK3comprep)[,studyvar,,,drop=FALSE]
-    eval(parse(text=Sauve("AK3comprep",adde2)))})}
-####################################################
-if(is.element("AK2",what)){
-  charge("ak2CPS");
-  mclapply(list.adde2bis,function(adde2){
-    charge(paste0("ak2",adde2))
-    ak<-c(ak2,ak2CPS)
-    coeffAK<-CoeffAK2(nmonth,ak,simplify=TRUE)
-    charge(paste0("mtc",adde2))
-    AK2comprep<-aperm(array(apply(mtc,2,function(X){apply(coeffAK,3,function(coeff){coeff%*%X})}),c(3,nmonth,length(ak),nrep)),c(2,1,3,4))
-    dimnames(AK2comprep)<-list(tables.entree,listpumlrR,paste0("AK2_",names(ak)),paste0("rep",1:nrep))
-    AK2comprep<-addU(AK2comprep)[,studyvar,,,drop=FALSE]
-    eval(parse(text=Sauve("AK2comprep",adde2)))})}
+  YFcomprep<-plyr::aaply(dimnames(YF_coeffs)[[1]],1, function(i){
+  plyr::aaply(misestimates[,,,i,],1,function(X){YF_coeffs[i,,]%*%c(X)})
+  })
+YFcomprep<-addUtoarray(YFcomprep,)
+save(YFcomprep,file=file.path(resultsfolder ,"Simu_coeffAK3.rda"))
 
-if(is.element("AKtest",what)){
-  charge("ak3CPS");
-  mclapply(list.adde2bis,function(adde2){
-    charge(paste0("aktest",adde2))
-    ak<-c(ak,lapply(ak3CPS,changeak))
-    coeffAK<-CoeffAK3(nmonth,ak)
-    charge(paste0("mtc",adde2))
-    AK3comprep<-aperm(array(apply(mtc,2,function(X){apply(coeffAK,3,function(coeff){coeff%*%X})}),c(3,nmonth,length(ak),nrep)),c(2,1,3,4))
-    dimnames(AK3comprep)<-list(tables.entree,listpumlrR,names(ak),paste0("rep",1:nrep))
-    AK3comprep<-addU(AK3comprep)[,studyvar,,,drop=FALSE]
-    eval(parse(text=Sauve("AK3comprep",paste0("test",adde2))))})}
-####################################################
-# Computation of estimated best in Clin, AK
-####################################################
-if(is.element("estcoeffAK3",what)){
-  sapply(list.adde2bis,function(adde2){
-    charge(paste0("sigma2hatA",adde2))
-    charge(paste0("S2comprep",adde2))
-    charge(paste0("ak3",adde2))
-    XX=sapply((1:nrep)[order(runif(nrep))],function(repe){
-      Sigmahat<-Sigmahatf(repe,sigma2hatA)
-      AK3hat=bestAK3(Sigmahat,S2comprep[,listpumlrR,1,repe],
-                     startval=ak6to4(ak3$compromise),
-                     what=list(compromise=varAK3compratmean4),itnmax=50)$compromise
-      eval(parse(text=Sauve("AK3hat",paste0(adde2,"_",repe))))})})}
-####################################################
-if(is.element("estcoeffYF",what)){
-  sapply(list.adde2,function(adde2){
-    charge(paste0("sigma2hatA",adde2))
-    charge(paste0("S2comprep",adde2))
-    XX=
-      mclapply((1:nrep)[order(runif(nrep))],function(repe){
-        Sigmahat<-Sigmahatf(repe,sigma2hatA)
-        What=CoeffYF(nmonth,Sigmahat/factor)
-        eval(parse(text=Sauve("What",paste0(adde2,"_",repe))))})})}
-####################################################
-if(is.element("estAK3",what)){
-  mclapply(list.adde2bis,function(adde2){
-    charge(paste0("mtc",adde2))
-    estAK3comprep<-aperm(array(sapply(1:nrep,function(i){
-      charge(paste0("AK3hat",adde2,"_",i));
-      CoeffAK3(nmonth,list(AK3hat))[,,1]%*%mtc[,i]}),c(3,nmonth,1,nrep)),c(2,1,3,4))
-    dimnames(estAK3comprep)<-list(tables.entree,listpumlrR,"AK3_est",paste0("rep",1:nrep))
-    estAK3comprep<-addU(estAK3comprep)[,studyvar,,,drop=FALSE]
-    eval(parse(text=Sauve("estAK3comprep",adde2)))})}
-####################################################
-if(is.element("estAK2",what)){
-  mclapply(list.adde2bis,function(adde2){
-    charge(paste0("mtc",adde2))
-    estAK2comprep<-aperm(array(sapply(1:nrep,function(i){
-      charge(paste0("AK2hat",adde2,"_",i));
-      CoeffAK2(nmonth,list(AK2hat))[,,1]%*%mtc[,i]}),c(3,nmonth,1,nrep)),c(2,1,3,4))
-    dimnames(estAK2comprep)<-list(tables.entree,listpumlrR,"AK2_est",paste0("rep",1:nrep))
-    estAK2comprep<-addU(estAK2comprep)[,studyvar,,,drop=FALSE]
-    eval(parse(text=Sauve("estAK2comprep",adde2)))})}
-####################################################
-if(is.element("estYF",what)){ 
-  mclapply(list.adde2bis,function(adde2){
-    charge(paste0("mtc",adde2))
-    estYFcomprep<-aperm(array(sapply(1:nrep,function(i){
-      charge(paste0("What",adde2,"_",i))    
-      What%*%mtc[,i]}),c(1,3,nmonth,nrep)),c(3,2,1,4))
-    dimnames(estYFcomprep)<-list(tables.entree,listpumlrR,"estYF",paste0("rep",1:nrep))
-    estYFcomprep<-addU(estYFcomprep)[,studyvar,,,drop=FALSE]
-    eval(parse(text=Sauve("estYFcomprep",adde2)))})}
 ####################################################
 # Computation of Reg Comp, MA
 ####################################################
-if(any(is.element(what,c("MRR","S2check","BCL2","BCL0","BCL","BCLratio")))){
+load(file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
   for(popnum in popnums){
     for (bias in biass){
       adde1="_rep"
       adde2=adde2f(bias,popnum)
       load(paste0(tablesfolder,"/list.tablespop",popnum,".Rdata"))  
-      if(is.element("BCL0",what)){
-        charge(paste0("Scomppop",popnum))
-        list.dft.x2BCL0<-unemploymentcountarray(Scomppop,2)[c(1,1:85),paste0("pumlrR_n",c(0,1,"_1"))]
-        colnames(list.dft.x2BCL0)<-paste0("pumlrRlag_n",c(0,1,"_1"))}
       ##---------------------------------------------------------------
       #Computations
       pluserror<-function(x){
@@ -400,3 +317,36 @@ if(FALSE){
   graphs(Recap[,,"AK2"])
 }
 #Compute_S2MRAK_rep(what=c("S2"))
+
+
+
+
+###############################################3
+
+#Table 2
+
+BestAK3
+
+# Table 3
+
+Best alpha
+
+# Figure 1
+
+Relative MSE Direct best ak best alpha
+
+# Table 4
+Quantiles and mean of the relative mean squared errors for different population
+and unemployment level estimators
+
+# Table 5
+
+Same with measurement error
+
+#Table 6 
+Dispersion and mean of the relative mean squared errors for different population
+and unemployment level estimators
+
+#Table 7
+Dispersion and mean of the relative mean squared errors for different population
+and unemployment change estimators
