@@ -1,4 +1,11 @@
-
+' Returns the jth selected person in month m when the random number drawn is i.
+#'
+#' @parami i An integer
+#' @param j An integer
+#' @param m An integer
+#' @return The \code{j}th selected person in month \code{m} when the random number drawn is \code{i}.
+#' @examples
+#' samplerule(1,1:160,1)
 samplerule<-function(i,j,m){((5*(m-1)+
                                 5*(i-1)+
                                 5000*((j-1)%/%5)+((j-1)%%5)+5*((j-1)%/%100)+40*((j-1)%/%400)))%%100000+1}
@@ -8,7 +15,7 @@ sampleruleH<-function(i,j,m){(((m-1)+
 
 misH<-function(i,m,misi,syntheticcpspopsHA){apply(syntheticcpspopsHA[,sampleruleH(i,(8-misi)*20+(1:20),m),,m],c(1,3),sum)}
 
-mis<-function(i,m,misi,syntheticcpspopsA){apply(syntheticcpspopsA[,samplerule(i,(8-misi)*20+(1:20),m),,m],c(1,3),sum)}
+mis<-function(i,m,misi,syntheticcpspopsA){apply(syntheticcpspopsA[,samplerule(i,(8-misi)*100+(1:100),m),,m],c(1,3),sum)}
 
 
 #system.time(misestimates<-plyr::maply(expand.grid(i=1:3,m=1:85,misi=1:8),mis,syntheticcpspopsA=syntheticcpspopsA,.parallel=TRUE))

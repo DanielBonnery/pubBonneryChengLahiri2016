@@ -3,6 +3,7 @@ library(CompositeRegressionEstimation)
 library(pubBonneryChengLahiri2016)
 library(plyr)
 library(dataCPS)
+setwd(file.path(Mydirectories::Dropbox.directory(),"CensusBAE/R/Computation of FR/packages/pubBonneryChengLahiri2016/"))
 #library(doParallel)
 resultsfolder<-if(file.exists("datanotpushed")){"datanotpushed"}else{tempdir()}
 
@@ -40,6 +41,7 @@ syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
 save(syntheticcpspops,file=file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
 rm(Totals,crossTotals)
 #2.2. Aggregation of employment status by household and save in an array
+load(file.path(resultsfolder,"Simu_syntheticcpspops.rda"))
 syntheticcpspopsHA<-plyr::laply(syntheticcpspops,syntheticccpspopHAf,.progress="text")
 names(dimnames(syntheticcpspopsHA))[1]<-c("s")
 dimnames(syntheticcpspopsHA)[1]<-list(names(syntheticcpspops))
@@ -73,6 +75,7 @@ Sigmas<-plyr::aaply(misestimates,4,function(x){
     dimnames(Sigma)<-rep(dimnames(x)[2:4],2)
     names(dimnames(Sigma))<-paste0(names(dimnames(Sigma)),rep(1:2,each=3))
     Sigma},.progress="text")
+Hmisc::label(Sigmas)<-"array: for population s, covariance between months in sample estimate for month m1m group j1, and employment status y1 and month in sample estimate for month m2, group j2, and status y2"
 save(Sigmas,file=file.path(resultsfolder ,"Simu_Sigmas.rda"))
 #load(file.path(resultsfolder,"Simu_Sigmas.rda"))
 # Computation of coefficients for Best linear estimates (Yansaneh fuller)
@@ -101,22 +104,27 @@ save(coeffAK3sconstraint,file=file.path(resultsfolder ,"Simu_coeffAK3.rda"))
   #YF
 load(file.path(resultsfolder ,"Simu_misestimates.rda"))
 load(file.path(resultsfolder ,"Simu_YF_coeffs.rda"))
+load(file.path(resultsfolder,"Simu_Sigmas.rda"))
 
-  YFcomprep<-plyr::aaply(dimnames(YF_coeffs)[[1]],1, function(i){
-  plyr::aaply(misestimates[,,,i,],1,function(X){YF_coeffs[i,,]%*%c(X)})
+YFcomprep<-plyr::aaply(dimnames(YF_coeffs)[[1]],1, function(i){
+  plyr::aaply(misestimates[,,,i,],1,function(X){
+    array(YF_coeffs[i,,]%*%c(X),c(3,dim(YF_coeffs)[2]/3))})
   })
-YFcomprep<-addUtoarray(YFcomprep,)
+dimnames(YFcomprep)[3:4]<-dimnames(Sigmas)[c(4,2)]
+YFcomprep<-addUtoarray(YFcomprep,3)
 save(YFcomprep,file=file.path(resultsfolder ,"Simu_coeffAK3.rda"))
 
 ####################################################
 # Computation of Reg Comp, MA
 ####################################################
 load(file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
+popnums<-dimnames(Sigmas)[[1]]
+biass=c("","bias")
   for(popnum in popnums){
     for (bias in biass){
       adde1="_rep"
+      adde2f<-function(bias,popnum){paste(popnum,bias,sep="-")}
       adde2=adde2f(bias,popnum)
-      load(paste0(tablesfolder,"/list.tablespop",popnum,".Rdata"))  
       ##---------------------------------------------------------------
       #Computations
       pluserror<-function(x){
@@ -128,32 +136,16 @@ load(file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
         for( z in (1:20)[diffe[1:20]>0]){
           x[((5*(z-1)+1):(5*z))[x[((5*(z-1)+1):(5*z))]=="1"][1:diffe[z]]]<-"0"}
         x}
-      load(paste0(tablesfolder,"/Toussamples.Rdata"))
+
       hrmis=as.factor(rep(8:1,each=100))
       un=rep(1,800)
-      
-      lff<-list.files(path="~/R/Resultats/")
-      if(is.null(u)){
-        u=(1:nrep)[apply(
-          outer(paste0(what[is.element(what,c("MRR","S2check","BCL2","BCL0","BCL","BCLratio"))],"comp"),
-                paste0(adde1,1:nrep,adde2,".Rdata"),
-                paste0),
-          2,function(f){any(
-            !is.element(f,lff))})    ]}
-      print(u)
-      
-      if(bias=="bias"){
-        load(paste0("/home/daniel/R/tables/list.tablesA_",popnum,".Rdata"))
-        nonbiase=list.tablesA[,1,,]
-        load(paste0("/home/daniel/R/tables/list.tablesA_bias",popnum,".Rdata"))
-        biase=list.tablesA[,1,,]
-        diff<-biase-nonbiase}      
+      u=1:1000
+      i=1
       mclapply(u,function(i){
         print(i)
         list.tables<-lapply(1:85,function(j){    
           if(bias==""){
-            cbind((list.tablespop[[j]])[Toussamples[[i]]$Samplei[,j],],
-                  hrmis,un)}
+            cbind(syntheticcpspops[[popnum]][[j]][samplerule(i,1:160,j)],hrmis,un)}
           else{ll<-
             cbind((list.tablespop[[j]])[Toussamples[[i]]$Samplei[,j],],
                   hrmis,un)
