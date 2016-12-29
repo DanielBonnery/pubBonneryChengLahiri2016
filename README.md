@@ -14,7 +14,7 @@ Note that this package depends on different packages I developped, that will be 
 * [dataCPS](https://github.com/DanielBonnery/dataCPS). dataCPS is a package that contains tools to download the public use data files related to CPS from the Census Bureau website and convert them to R data frames.
 
 
-## 2. Reproduction of the computation made on CPS data. 
+## 2. Reproduction of the computations made on CPS data. 
 
 ### 2.1. Note on the data 
 Here we give the programs we used to compute the estimates on the Census data, and we apply those programs to the CPS data that is published on the web by the Census. Differences between web data and data we had access to when we were working at the Census may exist and explain the differences we can see.
@@ -31,113 +31,24 @@ demo(ComputeestimatesonCPSwebdata)
 
 
 
-### 2.3.1. Figure 2.a.
-
-```r
-print(figure2.a)
-```
-
-![plot of chunk fig2a](figure/fig2a-1.png)
-
-
-### 2.3.2. Figure 2.b.
-
-```r
-print(figure2.b)
-```
-
-![plot of chunk fig2b](figure/fig2b-1.png)
-
-
-## 3. Reproduction of the simulations made on CPS data. 
-
-
-### 3.1 R code
-
-
-```r
-library("DanielBonnery/pubBonneryLahiriCheng2016")
-demo(Simulation)
-```
-
-### 3.2. Results
-
-### 3.2.1. Figure 1
-
-```r
-print(1)
-```
-### 3.2.2. Table 2
-
-```r
-knitr::kable(data.frame(x=1))
-```
 
 
 
-|  x|
-|--:|
-|  1|
-### 3.2.3. Table 3
-
-```r
-knitr::kable(data.frame(x=1))
-```
 
 
 
-|  x|
-|--:|
-|  1|
-### 3.2.4. Table 4
-
-```r
-knitr::kable(data.frame(x=1))
-```
 
 
 
-|  x|
-|--:|
-|  1|
-### 3.2.4. Table 5
-
-```r
-knitr::kable(data.frame(x=1))
-```
 
 
 
-|  x|
-|--:|
-|  1|
-### 3.2.4. Table 6
-
-```r
-knitr::kable(data.frame(x=1))
-```
 
 
 
-|  x|
-|--:|
-|  1|
-
-### 3.2.4. Table 7
-
-```r
-knitr::kable(data.frame(x=1))
-```
 
 
 
-|  x|
-|--:|
-|  1|
-## Bonus
 
-### Table 1
 
-```r
-CPSrotationchart()
-```
+

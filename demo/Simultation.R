@@ -1,11 +1,10 @@
 #1. Load libraries
 library(CompositeRegressionEstimation)
-library(pubBonneryChengLahiri2016)
+#library(pubBonneryChengLahiri2016)
 library(plyr)
 library(dataCPS)
-setwd(file.path(Mydirectories::Dropbox.directory(),"CensusBAE/R/Computation of FR/packages/pubBonneryChengLahiri2016/"))
 #library(doParallel)
-resultsfolder<-if(file.exists("datanotpushed")){"datanotpushed"}else{tempdir()}
+resultsfolder<-if(file.exists(file.path(file.path(Mydirectories::Dropbox.directory(),"CensusBAE/R/Computation of FR/packages/pubBonneryChengLahiri2016/"),"datanotpushed"))){file.path(Mydirectories::Dropbox.directory(),"CensusBAE/R/Computation of FR/packages/pubBonneryChengLahiri2016/datanotpushed")}else{tempdir()}
 
 #nodes <- detectCores()
 #cl <- makeCluster(nodes)
@@ -17,42 +16,57 @@ allmonths <- format(seq(as.Date("20050101", "%Y%m%d"),
                         as.Date("20120101", "%Y%m%d"),
                         by="month"), "%Y%m")
 names(allmonths)<-allmonths
-list.tablesweb<-plyr::alply(allmonths,1,function(x){
-  eval(parse(text=paste0("data(cps",x,")")))
-  y<-get(paste0("cps",x))
-  y$pemlrR<-rep(c("1","0","_1"),c(2,2,4))[factor(y$pemlr,levels=c(1:7,"-1"))]
-  y[	y$hrintsta=="1" & y$prpertyp %in% c("1","2"), ]
-  y$employed=y$pemlrR=="1";y$unemployed=y$pemlrR=="0";
-  y[,c("hrhhid","peage","pesex","pulineno","pehspnon","pemlr","pwsswgt","pwcmpwgt","pemlrR","hrmis","employed","unemployed")]
-},.progress = "text")
-rm(list=grep("cps",ls(),value=TRUE))
-names(list.tablesweb)<-allmonths
+if(!file.exists(file.path(resultsfolder,"Simu_list.tablesweb.rda"))){
+  list.tablesweb<-plyr::alply(allmonths,1,function(x){
+    eval(parse(text=paste0("data(cps",x,")")))
+    y<-get(paste0("cps",x))
+    y$pemlrR<-rep(c("1","0","_1"),c(2,2,4))[factor(y$pemlr,levels=c(1:7,"-1"))]
+    y[	y$hrintsta=="1" & y$prpertyp %in% c("1","2"), ]
+    y$employed=y$pemlrR=="1";y$unemployed=y$pemlrR=="0";
+    y[,c("hrhhid","peage","pesex","pulineno","pehspnon","pemlr","pwsswgt","pwcmpwgt","pemlrR","hrmis","employed","unemployed")]
+  },.progress = "text")
+  rm(list=grep("cps",ls(),value=TRUE))
+  names(list.tablesweb)<-allmonths
+  save(list.tablesweb,file=file.path(resultsfolder,"Simu_list.tablesweb.rda"))
+}
+if(!file.exists(file.path(resultsfolder,"Simu_Totals.rda"))){
+  load(file.path(resultsfolder,"Simu_list.tablesweb.rda"))
+  Totals<-CompositeRegressionEstimation::WS(list.tablesweb,weight ="pwsswgt" ,list.y = "pemlrR")
+  dimnames(Totals)[[2]]<-substr(dimnames(Totals)[[2]],9,10)
+  names(dimnames(Totals))<-c("month","employment")
+  save(Totals,file=file.path(resultsfolder,"Simu_Totals.rda"))
+  rm(list.tablesweb);gc()}
 
-Totals<-WS(list.tablesweb,list.y = "pemlrR",weight ="pwsswgt" )
-dimnames(Totals)[[2]]<-substr(dimnames(Totals)[[2]],9,10)
-save(Totals,file=file.path(resultsfolder,"Simu_Totals.rda"))
-crossTotals<-douuble (list.tablesweb,
-                    w="pwsswgt",
-                    id=c("hrhhid","pulineno"),list.y="pemlrR")$N01
-save(crossTotals,file=file.path(resultsfolder,"Simu_Totals.rda"))
-rm(list.tablesweb);gc()
+if(!file.exists(file.path(resultsfolder,"Simu_crossTotals.rda"))){
+  load(file.path(resultsfolder,"Simu_list.tablesweb.rda"))
+  crossTotals<-CompositeRegressionEstimation::douuble (list.tablesweb,
+                      w="pwsswgt",
+                      id=c("hrhhid","pulineno"),y="pemlrR")$N01
+save(crossTotals,file=file.path(resultsfolder,"Simu_crossTotals.rda"))
+rm(list.tablesweb,crossTotals);gc()}
 #2.1. Create 3 synthetic populations.
-syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
+if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspops.rda"))){
+  load(file.path(resultsfolder,"Simu_crossTotals.rda"))
+  load(file.path(resultsfolder,"Simu_Totals.rda"))
+  syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
 save(syntheticcpspops,file=file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
-rm(Totals,crossTotals)
+rm(Totals,crossTotals,syntheticcpspops);gc()}
 #2.2. Aggregation of employment status by household and save in an array
+if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspopsHA.rda"))){
 load(file.path(resultsfolder,"Simu_syntheticcpspops.rda"))
 syntheticcpspopsHA<-plyr::laply(syntheticcpspops,syntheticccpspopHAf,.progress="text")
 names(dimnames(syntheticcpspopsHA))[1]<-c("s")
 dimnames(syntheticcpspopsHA)[1]<-list(names(syntheticcpspops))
 Hmisc::label(syntheticcpspopsHA)<-"Total for household h, synthetisation method z, employment status y, and month m"
-rm(syntheticcpspops)
-gc()
+save(syntheticcpspopsHA,file=file.path(resultsfolder,"Simu_syntheticcpspopsHA.rda"))
+rm(syntheticcpspops,syntheticcpspopsHA);gc()}
 #2.3. Computation of (true) population totals
+if(!file.exists(file.path(resultsfolder,"Simu_Populationtotals.rda"))){
+  load(file.path(resultsfolder,"Simu_syntheticcpspopsHA.rda"))
 Populationtotals<-plyr::aaply(syntheticcpspopsHA,c(1,3:4),sum,.progress="text")#.parallel=TRUE)
 Hmisc::label(Populationtotals)<-"Total for synthetisation method z, employment status y, and month m"
 save(Populationtotals,file=file.path(resultsfolder ,"Simu_Populationtotals.rda"))
-
+rm(Populationtotals,syntheticcpspopsHA);gc()}
 #stopCluster(cl)
 
 
@@ -69,12 +83,12 @@ Direct<-plyr::aaply(misestimates,c(1:2,4:5),sum,.progress="text")
 save(Direct,file=file.path(resultsfolder ,"Simu_Direct.rda"))
 #2.6. Computation of Sigma          
 Sigmas<-plyr::aaply(misestimates,4,function(x){
-    Sigma=array(var(array(x,
-                            c(dim(x)[1],prod(dim(x)[2:4])))),
-                rep(dim(x)[2:4],2))
-    dimnames(Sigma)<-rep(dimnames(x)[2:4],2)
-    names(dimnames(Sigma))<-paste0(names(dimnames(Sigma)),rep(1:2,each=3))
-    Sigma},.progress="text")
+  Sigma=array(var(array(x,
+                        c(dim(x)[1],prod(dim(x)[2:4])))),
+              rep(dim(x)[2:4],2))
+  dimnames(Sigma)<-rep(dimnames(x)[2:4],2)
+  names(dimnames(Sigma))<-paste0(names(dimnames(Sigma)),rep(1:2,each=3))
+  Sigma},.progress="text")
 Hmisc::label(Sigmas)<-"array: for population s, covariance between months in sample estimate for month m1m group j1, and employment status y1 and month in sample estimate for month m2, group j2, and status y2"
 save(Sigmas,file=file.path(resultsfolder ,"Simu_Sigmas.rda"))
 #load(file.path(resultsfolder,"Simu_Sigmas.rda"))
@@ -97,11 +111,11 @@ save(coeffAK3s,file=file.path(resultsfolder ,"Simu_coeffAK3.rda"))
 
 coeffAK3sconstraint<-plyr::aaply(1:3,1,function(i){
   bestAK3contraint(Sigmas[i,,,,,,],t(Populationtotals[i,,]))})
-save(coeffAK3sconstraint,file=file.path(resultsfolder ,"Simu_coeffAK3.rda"))
+save(coeffAK3sconstraint,file=file.path(resultsfolder ,"Simu_coeffAK3sconstraint.rda"))
 
 ####################################################  
 #Computation of linear estimators
-  #YF
+#YF
 load(file.path(resultsfolder ,"Simu_misestimates.rda"))
 load(file.path(resultsfolder ,"Simu_YF_coeffs.rda"))
 load(file.path(resultsfolder,"Simu_Sigmas.rda"))
@@ -109,7 +123,7 @@ load(file.path(resultsfolder,"Simu_Sigmas.rda"))
 YFcomprep<-plyr::aaply(dimnames(YF_coeffs)[[1]],1, function(i){
   plyr::aaply(misestimates[,,,i,],1,function(X){
     array(YF_coeffs[i,,]%*%c(X),c(3,dim(YF_coeffs)[2]/3))})
-  })
+})
 dimnames(YFcomprep)[3:4]<-dimnames(Sigmas)[c(4,2)]
 YFcomprep<-addUtoarray(YFcomprep,3)
 save(YFcomprep,file=file.path(resultsfolder ,"Simu_coeffAK3.rda"))
@@ -118,96 +132,41 @@ save(YFcomprep,file=file.path(resultsfolder ,"Simu_coeffAK3.rda"))
 # Computation of Reg Comp, MA
 ####################################################
 load(file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
-popnums<-dimnames(Sigmas)[[1]]
-biass=c("","bias")
-  for(popnum in popnums){
-    for (bias in biass){
-      adde1="_rep"
-      adde2f<-function(bias,popnum){paste(popnum,bias,sep="-")}
-      adde2=adde2f(bias,popnum)
-      ##---------------------------------------------------------------
-      #Computations
-      pluserror<-function(x){
-        if(sum(x[700,800]=="0")>2){
-          x[sample((700:800)[x[700,800]=="0"],2)]<-"1"}
-        x}
-      
-      pluserror<-function(x,diffe){
-        for( z in (1:20)[diffe[1:20]>0]){
-          x[((5*(z-1)+1):(5*z))[x[((5*(z-1)+1):(5*z))]=="1"][1:diffe[z]]]<-"0"}
-        x}
+popnums<-names(syntheticcpspops)
+biass=c("")
+hrmis=as.factor(rep(8:1,each=100))
+un=rep(1,800)
 
-      hrmis=as.factor(rep(8:1,each=100))
-      un=rep(1,800)
-      u=1:1000
-      i=1
-      mclapply(u,function(i){
-        print(i)
-        list.tables<-lapply(1:85,function(j){    
-          if(bias==""){
-            cbind(syntheticcpspops[[popnum]][[j]][samplerule(i,1:160,j)],hrmis,un)}
-          else{ll<-
-            cbind((list.tablespop[[j]])[Toussamples[[i]]$Samplei[,j],],
-                  hrmis,un)
-          ll[["pumlrR"]]<-pluserror(ll[["pumlrR"]],diff[,j,i])
-          ll}})
-        names(list.tables)<-names(list.tablespop)
-        #MRR
-        if(is.element("MRR",what)){
-          list.yMR=c("pumlrR")
-          list.xMR=c("pumlrR")
-          file=paste0("MRRcomp",adde1,i,sep="")
-          mrr<-  MR(list.tables=list.tables, w=w, id=id, 
-                    list.xMR=list.xMR, list.x1=list.x1, list.x2=list.x2,list.y=list.yMR, list.dft.x2=list.dft.x2,Alpha=Alpha,theta=3/4)
-          assign(file,mrr)
-          eval(parse(text=Sauve(file,adde2)))}
-        #MRR
-        if(is.element("S2check",what)){
-          list.y=c("pumlrR")
-          file=paste0("S2checkcomp",adde1,i,sep="")
-          s2<-  WS(list.tables=list.tables, w=w, list.y=list.y)
-          assign(file,s2)
-          eval(parse(text=Sauve(file,adde2)))}
-        
-        
-        #BCL0
-        if(is.element("BCL0",what)){
-          file=paste("BCL0comp",adde1,i,sep="")
-          assign(file,
-                 BCL0(list.tables,
-                      w,
-                      id,
-                      list.x2="pumlrRlag", #external
-                      list.y="pumlrR",
-                      calibmethod="linear",
-                      list.dft.x2=list.dft.x2BCL0))
-          eval(parse(text=Sauve(file,adde2)))}
-        if(is.element("BCL2",what)){
-          list.yMR=c("pumlrR")
-          list.xMR=c("pumlrR")
-          file=paste("BCL2comp",adde1,i,sep="")
-          assign(file,
-                 BCL2(list.tables,
-                      w,
-                      Alpha=c(0,.5,.75,.9,1,2,3,4,5,10,20),
-                      id,list.xMR="pumlrR",
-                      list.x1=list.x1, list.x2=list.x2,list.y=list.yMR, list.dft.x2=list.dft.x2))
-          eval(parse(text=Sauve(file,adde2)))}
-        
-        return(0)})
-      machin<-function(toto,dimee=FALSE,adde2=adde2){
-        if(is.element(toto,what)){
-          sapply(paste0(toto,"comp",adde1,1:nrep,adde2),charge)  
-          XX=addUto1000matrices(toto,"_rep")
-          assign(paste0(toto,"comprep"),XX)
-          if(dimee){dimnames(XX)[[3]]<-paste0(toto,dimnames(XX)[[3]])}
-          eval(parse(text=Sauve(paste0(toto,"comprep"),adde2)))
-          rm(list=paste0(toto,"comp_rep",1:nrep))
-          system(paste0("cd ",Resultsfolder,";rm ",paste(paste0(toto,"comp",adde1,1:nrep,adde2,".Rdata"),collapse=" ")))}
-      }
-      machin("BCL2",TRUE,adde2)        
-      machin("MRR",TRUE,adde2)
-      machin("BCL0",TRUE,adde2)}}}
+MRRcomp<-plyr::aaply(popnums,1,function(popnum){
+  plyr::aaply(1:1000,1,function(i){
+    list.tables<-lapply(1:85,function(j){    
+      cbind(syntheticcpspops[[popnum]][[j]][samplerule(i,1:800,j),],hrmis,un)})
+    names(list.tables)<-names(syntheticcpspops[[1]])
+    #MRR
+    mrr<-MR(list.tables=list.tables, w="pwsswgt", id=c("hrlongid",  "pulineno"), 
+            list.xMR="pumlrR", list.x1="un", list.x2=NULL,list.y="pumlrR", 
+            list.dft.x2=NULL,Alpha=c(0,seq(0.5,1,length.out=11)),theta=3/4)$dfEst},
+    .progress = "text")})
+dimnames(MRRcomp)[[1]]<-popnums
+names(dimnames(MRRcomp))[1:2]<-c("population","seed")
+MRRcomp<-addUtoarray(MRRcomp,4,uenames=c(u="pumlrR_n0",e="pumlrR_n1","r"="r"))
+save(MRRcomp,file=file.path(resultsfolder,"Simu_MRRcomp.rda"))
+load(file=file.path(resultsfolder,"Simu_MRRcomp.rda"))
+
+
+machin<-function(toto,dimee=FALSE,adde2=adde2){
+  
+  if(is.element(toto,what)){
+    sapply(paste0(toto,"comp",adde1,1:nrep,adde2),charge)  
+    XX=addUto1000matrices(toto,"_rep")
+    assign(paste0(toto,"comprep"),XX)
+    if(dimee){dimnames(XX)[[3]]<-paste0(toto,dimnames(XX)[[3]])}
+    eval(parse(text=Sauve(paste0(toto,"comprep"),adde2)))
+    rm(list=paste0(toto,"comp_rep",1:nrep))
+    system(paste0("cd ",resultsfolder,";rm ",paste(paste0(toto,"comp",adde1,1:nrep,adde2,".Rdata"),collapse=" ")))}
+}
+
+machin("MRR",TRUE,adde2)
 
 if(is.element("S",what)){
   sapply(list.adde2bis,
@@ -316,8 +275,8 @@ if(FALSE){
 ###############################################3
 
 #Table 2
-
-BestAK3
+load(file.path(resultsfolder ,"Simu_coeffAK3.rda"))
+coeffAK3s
 
 # Table 3
 
