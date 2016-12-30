@@ -1,6 +1,6 @@
-' Returns the jth selected person in month m when the random number drawn is i.
+#' Returns the jth selected person in month m when the random number drawn is i.
 #'
-#' @parami i An integer
+#' @param i An integer
 #' @param j An integer
 #' @param m An integer
 #' @return The \code{j}th selected person in month \code{m} when the random number drawn is \code{i}.
