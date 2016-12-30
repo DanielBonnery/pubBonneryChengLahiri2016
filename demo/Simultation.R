@@ -148,6 +148,7 @@ if(!file.exists(file.path(resultsfolder,"Simu_AKcomprep.rda"))){
   load(file.path(resultsfolder ,"Simu_coeffAK3.rda"))
   #compute estimates with CPS ak coefficients
   
+  
   plyr::aaply(coeffAK3,1:2,function(x){
     CompositeRegressionEstimation::CPS_AK_est(
       
@@ -155,25 +156,16 @@ if(!file.exists(file.path(resultsfolder,"Simu_AKcomprep.rda"))){
   
   #compute weights
   AK3_weights<-
-    plyr::aaply(dimnames(coeffAK3)[1],1,function(s){
-      plyr::aaply(dimnames(coeffAK3)[2],1,function(cc){
-        CPS_AK_coeff.array.fl(dim(misestimates[1,,,1,])[1],coeffAK3,simplify=FALSE)
-    })})
-  AK3_weights<-
-    plyr::aaply(coeffAK3,1:2,function(x){CPS_AK_coeff.array.fl(dim(misestimates[1,,,1,])[1],x,simplify=FALSE)})
+    plyr::aaply(coeffAK3,1:2,function(x){
+      CPS_AK_coeff.array.f(dim(misestimates)[match("m",names(dimnames(misestimates)))],x,simplify=FALSE)})
   
+  AKcomprep<-TensorDB::"%.%"(AK3_weights,misestimates,
+                          I_A=list(c=c("s"),n=c("c","i2","m2"),p=c( "i1", "mis1", "m1")),
+                          I_B=list(c="s",p=c("y","j","m"),q="i"))
   
-  
-  
-  CPS_AK_coeff.array.fl(dim(misestimates[1,,,1,])[1],coeffAK3[1],simplify=FALSE)
-  AKcomprep<-plyr::aaply(dimnames(coeffAK3)[[1]],1, function(i){
-    plyr::aaply(misestimates[,,,i,],1,function(X){
-      array(coeffAK3s[i,,]%*%c(X),c(3,dim(coeffAK3s)[2]/3))})
-  })
-  dimnames(AKcomprep)[3:4]<-dimnames(Sigmas)[c(4,2)]
-  AKcomprep<-addUtoarray(AKcomprep,3)
+  AKcomprep<-pubBonneryChengLahiri2016::addUtoarray(AKcomprep,match("i2",names(dimnames(AKcomprep))))
   save(AKcomprep,file=file.path(resultsfolder ,"Simu_AKcomprep.rda"))
-  rm(AKcomprep,misestimates,coeffAK3s);gc()
+  rm(AKcomprep,AK3_weights,coeffAK3,misestimates);gc()
 }
 
 
@@ -203,119 +195,119 @@ if(!file.exists(file.path(resultsfolder,"Simu_MRRcomp.rda"))){
 
 #3.10. Stack everything together.
 if(!file.exists(file.path(resultsfolder,"Simu_all_estimates_no_rgb.rda"))){
+}
+
+#4. Redo all simulations with "rotation group bias".
+
+
+#5. Compute variance and bias of all estimates.
+
+
+
+
+#6. Compute best alpha.
+
+machin<-function(toto,dimee=FALSE,adde2=adde2){
   
-  
-  #4. Redo all simulations with "rotation group bias".
-  
-  
-  #5. Compute variance and bias of all estimates.
-  
-  
-  
-  
-  #6. Compute best alpha.
-  
-  machin<-function(toto,dimee=FALSE,adde2=adde2){
-    
-    if(is.element(toto,what)){
-      sapply(paste0(toto,"comp",adde1,1:nrep,adde2),charge)  
-      XX=addUto1000matrices(toto,"_rep")
-      assign(paste0(toto,"comprep"),XX)
-      if(dimee){dimnames(XX)[[3]]<-paste0(toto,dimnames(XX)[[3]])}
-      eval(parse(text=Sauve(paste0(toto,"comprep"),adde2)))
-      rm(list=paste0(toto,"comp_rep",1:nrep))
-      system(paste0("cd ",resultsfolder,";rm ",paste(paste0(toto,"comp",adde1,1:nrep,adde2,".Rdata"),collapse=" ")))}
-  }
-  
-  machin("MRR",TRUE,adde2)
-  
-  if(is.element("S",what)){
-    sapply(list.adde2bis,
-           function(adde2){
-             charge(paste0("Scomppop",adde2))
-             ScomppopU <-unemploymentcount(Scomppop)[,studyvar]
-             ScomppopUdiff<-ScomppopU[-1,studyvar]-ScomppopU[-nrow(ScomppopU),studyvar]  
-             ScompUrep<-array(0,c(85,length(studyvar),1,7))
-             dimnames(ScompUrep)<-list(
-               tables.entree,studyvar,"S",c("mean" ,   "var"   ,  "bias"   , "mse"   ,  "una"  ,   "relbias", "cv"))
-             ScompUrep[,studyvar,"S","mean"]<-ScomppopU[,studyvar]
-             
-             ScompUrepdiff<-ScompUrep[-1,studyvar,,,drop=FALSE]-
-               ScompUrep[-dim(ScompUrep)[1],studyvar,,,drop=FALSE]
-             
-             #sapply(c("S2comprep","RAcomprep","BCLcomprep","BCL0comprep","BCL2comprep","MRRcomprep","AK2_papacomprep","BCLratiocomprep"),charge)
-             eval(parse(text=Sauve("ScompUrep",adde2)))
-             eval(parse(text=Sauve("ScompUrepdiff",adde2)))
-             eval(parse(text=Sauve("ScomppopU",adde2)))
-             eval(parse(text=Sauve("ScomppopUdiff",adde2)))})}
-  
-  
-  
-  
-  
-  
-  if(any(is.element(what,c("S","S2","BCL0","BCL2","AK3","AK2","estAK3","MRR","YF","estYF","MA")))){  
-    sapply(list.adde2bis,
-           function(adde2){
-             sapply(paste0(c("S2","BCL0","BCL2","AK3","AK2",#"estAK2",
-                             "estAK3","MRR","YF","estYF"),paste0("comprep",adde2)),charge)
-             # charge(paste0("AK3compreptest",adde2)
-             charge(paste0("ScompUrep",adde2))
-             charge(paste0("ScompUrepdiff",adde2))
-             charge(paste0("ScomppopU",adde2))
-             charge(paste0("ScomppopUdiff",adde2))
-             Recap<-abind(ScompUrep[,studyvar,,,drop=FALSE],
-                          calcvarmeana(S2comprep),
-                          calcvarmeana(MRRcomprep),
-                          calcvarmeana(AK2comprep),
-                          calcvarmeana(AK3comprep),
-                          #    calcvarmeana(BCL2comprep),
-                          calcvarmeana(estAK3comprep),
-                          calcvarmeana(YFcomprep),
-                          calcvarmeana(estYFcomprep),
-                          calcvarmeana(BCL0comprep),
-                          along = 3)
-             compUrepdiff<-
-               abind(calcvarmeana(difff(S2comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                     calcvarmeana(difff(MRRcomprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                     calcvarmeana(difff(AK2comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                     calcvarmeana(difff(AK3comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                     #calcvarmeana(difff(BCL2comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                     calcvarmeana(difff(estAK3comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                     calcvarmeana(difff(YFcomprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                     calcvarmeana(difff(estYFcomprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                     calcvarmeana(difff(BCL0comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                     along = 3)
-             Recapdiff<-abind(ScompUrepdiff,
-                              compUrepdiff, along = 3) 
-             Recap<-abind(Recap,
-                          array(
-                            apply(Recap[,,,"mse"],3,function(x){x/Recap[,,"S2","mse"]}),
-                            dim(Recap)[1:3])
-                          ,along=4)
-             dimnames(Recap)[[4]][8]<-"ratmse"        
-             Recapdiff<-abind(Recapdiff,
-                              array(
-                                apply(Recapdiff[,,,"mse"],3,function(x){x/Recapdiff[,,"S2","mse"]}),
-                                dim(Recapdiff)[1:3])
-                              ,along=4)  
-             dimnames(Recapdiff)[[4]][8]<-"ratmse"
-             
-             dimnames(Recap)[[3]][3:24]<-paste0("MRR",dimnames(Recap)[[3]][3:24])
-             dimnames(Recapdiff)[[3]][3:24]<-paste0("MRR",dimnames(Recapdiff)[[3]][3:24])
-             save(     Recap,
-                       Recapdiff,
-                       file=paste0("replications",adde2,".Rdata"))})}
-  LL<-lapply(list.adde2,function(adde2){
-    load(paste0("replications",adde2,".Rdata"))
-    return(list(Recap=Recap,
-                Recapdiff=Recapdiff))});
-  names(LL)<-list.adde2
-  RecapA<-do.call(abind,c(lapply(LL,function(l){l$Recap}),list(along=5)))
-  RecapdiffA<-do.call(abind,c(lapply(LL,function(l){l$Recapdiff}),list(along=5)))
-  save(     RecapA,
-            RecapdiffA,
-            file="replications.Rdata")
+  if(is.element(toto,what)){
+    sapply(paste0(toto,"comp",adde1,1:nrep,adde2),charge)  
+    XX=addUto1000matrices(toto,"_rep")
+    assign(paste0(toto,"comprep"),XX)
+    if(dimee){dimnames(XX)[[3]]<-paste0(toto,dimnames(XX)[[3]])}
+    eval(parse(text=Sauve(paste0(toto,"comprep"),adde2)))
+    rm(list=paste0(toto,"comp_rep",1:nrep))
+    system(paste0("cd ",resultsfolder,";rm ",paste(paste0(toto,"comp",adde1,1:nrep,adde2,".Rdata"),collapse=" ")))}
+}
+
+machin("MRR",TRUE,adde2)
+
+if(is.element("S",what)){
+  sapply(list.adde2bis,
+         function(adde2){
+           charge(paste0("Scomppop",adde2))
+           ScomppopU <-unemploymentcount(Scomppop)[,studyvar]
+           ScomppopUdiff<-ScomppopU[-1,studyvar]-ScomppopU[-nrow(ScomppopU),studyvar]  
+           ScompUrep<-array(0,c(85,length(studyvar),1,7))
+           dimnames(ScompUrep)<-list(
+             tables.entree,studyvar,"S",c("mean" ,   "var"   ,  "bias"   , "mse"   ,  "una"  ,   "relbias", "cv"))
+           ScompUrep[,studyvar,"S","mean"]<-ScomppopU[,studyvar]
+           
+           ScompUrepdiff<-ScompUrep[-1,studyvar,,,drop=FALSE]-
+             ScompUrep[-dim(ScompUrep)[1],studyvar,,,drop=FALSE]
+           
+           #sapply(c("S2comprep","RAcomprep","BCLcomprep","BCL0comprep","BCL2comprep","MRRcomprep","AK2_papacomprep","BCLratiocomprep"),charge)
+           eval(parse(text=Sauve("ScompUrep",adde2)))
+           eval(parse(text=Sauve("ScompUrepdiff",adde2)))
+           eval(parse(text=Sauve("ScomppopU",adde2)))
+           eval(parse(text=Sauve("ScomppopUdiff",adde2)))})}
+
+
+
+
+
+
+if(any(is.element(what,c("S","S2","BCL0","BCL2","AK3","AK2","estAK3","MRR","YF","estYF","MA")))){  
+  sapply(list.adde2bis,
+         function(adde2){
+           sapply(paste0(c("S2","BCL0","BCL2","AK3","AK2",#"estAK2",
+                           "estAK3","MRR","YF","estYF"),paste0("comprep",adde2)),charge)
+           # charge(paste0("AK3compreptest",adde2)
+           charge(paste0("ScompUrep",adde2))
+           charge(paste0("ScompUrepdiff",adde2))
+           charge(paste0("ScomppopU",adde2))
+           charge(paste0("ScomppopUdiff",adde2))
+           Recap<-abind(ScompUrep[,studyvar,,,drop=FALSE],
+                        calcvarmeana(S2comprep),
+                        calcvarmeana(MRRcomprep),
+                        calcvarmeana(AK2comprep),
+                        calcvarmeana(AK3comprep),
+                        #    calcvarmeana(BCL2comprep),
+                        calcvarmeana(estAK3comprep),
+                        calcvarmeana(YFcomprep),
+                        calcvarmeana(estYFcomprep),
+                        calcvarmeana(BCL0comprep),
+                        along = 3)
+           compUrepdiff<-
+             abind(calcvarmeana(difff(S2comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                   calcvarmeana(difff(MRRcomprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                   calcvarmeana(difff(AK2comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                   calcvarmeana(difff(AK3comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                   #calcvarmeana(difff(BCL2comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                   calcvarmeana(difff(estAK3comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                   calcvarmeana(difff(YFcomprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                   calcvarmeana(difff(estYFcomprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                   calcvarmeana(difff(BCL0comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                   along = 3)
+           Recapdiff<-abind(ScompUrepdiff,
+                            compUrepdiff, along = 3) 
+           Recap<-abind(Recap,
+                        array(
+                          apply(Recap[,,,"mse"],3,function(x){x/Recap[,,"S2","mse"]}),
+                          dim(Recap)[1:3])
+                        ,along=4)
+           dimnames(Recap)[[4]][8]<-"ratmse"        
+           Recapdiff<-abind(Recapdiff,
+                            array(
+                              apply(Recapdiff[,,,"mse"],3,function(x){x/Recapdiff[,,"S2","mse"]}),
+                              dim(Recapdiff)[1:3])
+                            ,along=4)  
+           dimnames(Recapdiff)[[4]][8]<-"ratmse"
+           
+           dimnames(Recap)[[3]][3:24]<-paste0("MRR",dimnames(Recap)[[3]][3:24])
+           dimnames(Recapdiff)[[3]][3:24]<-paste0("MRR",dimnames(Recapdiff)[[3]][3:24])
+           save(     Recap,
+                     Recapdiff,
+                     file=paste0("replications",adde2,".Rdata"))})}
+LL<-lapply(list.adde2,function(adde2){
+  load(paste0("replications",adde2,".Rdata"))
+  return(list(Recap=Recap,
+              Recapdiff=Recapdiff))});
+names(LL)<-list.adde2
+RecapA<-do.call(abind,c(lapply(LL,function(l){l$Recap}),list(along=5)))
+RecapdiffA<-do.call(abind,c(lapply(LL,function(l){l$Recapdiff}),list(along=5)))
+save(     RecapA,
+          RecapdiffA,
+          file="replications.Rdata")
 }
 
 
@@ -337,7 +329,7 @@ if(FALSE){
 
 #Table 2
 load(file.path(resultsfolder ,"Simu_coeffAK3.rda"))
-coeffAK3s
+plyr::aaply(coeffAK3,1:2,function(x){x})[,,c(1:2,4:5)]
 
 # Table 3
 Best alpha

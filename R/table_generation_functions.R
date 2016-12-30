@@ -114,6 +114,46 @@ pumlrR <- function(i){replace(x<-as.character(-1+2*is.element(i,c("1","2"))+is.e
 #This function modify the dataframes of the list list.tables
 #and returns a list of modified tables
 
+list.tablesAf<-function(syntheticcpspops){
+  syntheticpop<-plyr::laply(syntheticcpspops,function(y){plyr::laply(y,function(x){model.matrix(~pumlrR+0,data=x)})},.progress = "text")
+  dimnames(syntheticpop)<-list(names(syntheticcpspops),names(syntheticcpspops[[1]]),1:100000,c("0","1","_1"))
+  names(dimnames(syntheticpop))<-c("s","m","i","y")
+  cc<-plyr::maply(.data=expand.grid(i=1:1000,
+                                m=dimnames(syntheticpop)$m,
+                                j=1:8),
+              .fun=function(i,m,j){syntheticpop[,m,samplerule(i,((8-j)*100)+(1:100),m),]},.progress = "text")}
+  
+                  
+
+
+list.tablesAbiasf<-function(list.tablesA){
+  list.tablesA[,,1,,,]<-plyr::aaply(list.tablesA[,,1,,,],
+                                           1:4,
+                                           function(x){if(x[2]>0){x+rbinom(1,x[2],.2)*c(1,-1,0)}else{x}})
+  list.tablesA}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
