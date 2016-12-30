@@ -10,11 +10,12 @@ library(dataCPS)
 
 #2. Create synthetic populations
 #2.0. Estimate counts from CPS web data.
-allmonths <- format(seq(as.Date("20050101", "%Y%m%d"),
-                        as.Date("20120101", "%Y%m%d"),
-                        by="month"), "%Y%m")
-names(allmonths)<-allmonths
+
 if(!file.exists(file.path(resultsfolder,"Simu_list.tablesweb.rda"))){
+  allmonths <- format(seq(as.Date("20050101", "%Y%m%d"),
+                          as.Date("20120101", "%Y%m%d"),
+                          by="month"), "%Y%m")
+  names(allmonths)<-allmonths
   list.tablesweb<-plyr::alply(allmonths,1,function(x){
     eval(parse(text=paste0("data(cps",x,")")))
     y<-get(paste0("cps",x))
@@ -50,6 +51,13 @@ if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspops.rda"))){
   syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
   save(syntheticcpspops,file=file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
   rm(Totals,crossTotals,syntheticcpspops);gc()}
+
+if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspopsA.rda"))){
+  syntheticcpspopsA<-list.tablesAf()
+  save(syntheticcpspopsA,file=file.path(resultsfolder ,"Simu_syntheticcpspopsA.rda"))
+  rm(syntheticcpspopsA);gc()}
+
+
 #2.4. Aggregation of employment status by household and save in an array
 if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspopsHA.rda"))){
   load(file.path(resultsfolder,"Simu_syntheticcpspops.rda"))

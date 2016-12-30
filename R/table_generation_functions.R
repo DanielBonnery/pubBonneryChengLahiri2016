@@ -114,9 +114,11 @@ pumlrR <- function(i){replace(x<-as.character(-1+2*is.element(i,c("1","2"))+is.e
 #This function modify the dataframes of the list list.tables
 #and returns a list of modified tables
 
-list.tablesAf<-function(syntheticcpspops){
+list.tablesAf<-function(){
+  load(file.path(resultsfolder,"Simu_syntheticcpspops.rda"))
   syntheticpop<-plyr::laply(syntheticcpspops,function(y){plyr::laply(y,function(x){model.matrix(~pumlrR+0,data=x)})},.progress = "text")
   dimnames(syntheticpop)<-list(names(syntheticcpspops),names(syntheticcpspops[[1]]),1:100000,c("0","1","_1"))
+  rm(syntheticcpspops);gc();
   names(dimnames(syntheticpop))<-c("s","m","i","y")
   cc<-plyr::maply(.data=expand.grid(i=1:1000,
                                 m=dimnames(syntheticpop)$m,
