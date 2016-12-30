@@ -1,15 +1,13 @@
+#note that this program takes time. If you plan to shut down your computer before it ends, please modify resultsfolder below. All results will be stored in this folder, and results alreadu stored will not be re-computed.
+resultsfolder<-if(file.exists(file.path(file.path(Mydirectories::Dropbox.directory(),"CensusBAE/R/Computation of FR/packages/pubBonneryChengLahiri2016/"),"datanotpushed"))){file.path(Mydirectories::Dropbox.directory(),"CensusBAE/R/Computation of FR/packages/pubBonneryChengLahiri2016/datanotpushed")}else{tempdir()}
+
 #1. Load libraries
 library(CompositeRegressionEstimation)
 #library(pubBonneryChengLahiri2016)
 library(plyr)
 library(dataCPS)
 #library(doParallel)
-resultsfolder<-if(file.exists(file.path(file.path(Mydirectories::Dropbox.directory(),"CensusBAE/R/Computation of FR/packages/pubBonneryChengLahiri2016/"),"datanotpushed"))){file.path(Mydirectories::Dropbox.directory(),"CensusBAE/R/Computation of FR/packages/pubBonneryChengLahiri2016/datanotpushed")}else{tempdir()}
 
-#nodes <- detectCores()
-#cl <- makeCluster(nodes)
-#registerDoParallel(cl)
-#on.exit(stopCluster(cl))
 #2. Create synthetic populations
 #2.0. Estimate counts from CPS web data.
 allmonths <- format(seq(as.Date("20050101", "%Y%m%d"),
@@ -29,6 +27,7 @@ if(!file.exists(file.path(resultsfolder,"Simu_list.tablesweb.rda"))){
   names(list.tablesweb)<-allmonths
   save(list.tablesweb,file=file.path(resultsfolder,"Simu_list.tablesweb.rda"))
 }
+#2.1. Compute count estimates from CPS web data by employment status and month
 if(!file.exists(file.path(resultsfolder,"Simu_Totals.rda"))){
   load(file.path(resultsfolder,"Simu_list.tablesweb.rda"))
   Totals<-CompositeRegressionEstimation::WS(list.tablesweb,weight ="pwsswgt" ,list.y = "pemlrR")
@@ -36,225 +35,287 @@ if(!file.exists(file.path(resultsfolder,"Simu_Totals.rda"))){
   names(dimnames(Totals))<-c("month","employment")
   save(Totals,file=file.path(resultsfolder,"Simu_Totals.rda"))
   rm(list.tablesweb);gc()}
-
+#2.2. Compute count estimates from CPS web data by month, employment status of the month, employment status of the previous month
 if(!file.exists(file.path(resultsfolder,"Simu_crossTotals.rda"))){
   load(file.path(resultsfolder,"Simu_list.tablesweb.rda"))
   crossTotals<-CompositeRegressionEstimation::douuble (list.tablesweb,
-                      w="pwsswgt",
-                      id=c("hrhhid","pulineno"),y="pemlrR")$N01
-save(crossTotals,file=file.path(resultsfolder,"Simu_crossTotals.rda"))
-rm(list.tablesweb,crossTotals);gc()}
-#2.1. Create 3 synthetic populations.
+                                                       w="pwsswgt",
+                                                       id=c("hrhhid","pulineno"),y="pemlrR")$N01
+  save(crossTotals,file=file.path(resultsfolder,"Simu_crossTotals.rda"))
+  rm(list.tablesweb,crossTotals);gc()}
+#2.3. Create 3 synthetic populations.
 if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspops.rda"))){
   load(file.path(resultsfolder,"Simu_crossTotals.rda"))
   load(file.path(resultsfolder,"Simu_Totals.rda"))
   syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
-save(syntheticcpspops,file=file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
-rm(Totals,crossTotals,syntheticcpspops);gc()}
-#2.2. Aggregation of employment status by household and save in an array
+  save(syntheticcpspops,file=file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
+  rm(Totals,crossTotals,syntheticcpspops);gc()}
+#2.4. Aggregation of employment status by household and save in an array
 if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspopsHA.rda"))){
-load(file.path(resultsfolder,"Simu_syntheticcpspops.rda"))
-syntheticcpspopsHA<-plyr::laply(syntheticcpspops,syntheticccpspopHAf,.progress="text")
-names(dimnames(syntheticcpspopsHA))[1]<-c("s")
-dimnames(syntheticcpspopsHA)[1]<-list(names(syntheticcpspops))
-Hmisc::label(syntheticcpspopsHA)<-"Total for household h, synthetisation method z, employment status y, and month m"
-save(syntheticcpspopsHA,file=file.path(resultsfolder,"Simu_syntheticcpspopsHA.rda"))
-rm(syntheticcpspops,syntheticcpspopsHA);gc()}
-#2.3. Computation of (true) population totals
+  load(file.path(resultsfolder,"Simu_syntheticcpspops.rda"))
+  syntheticcpspopsHA<-plyr::laply(syntheticcpspops,syntheticccpspopHAf,.progress="text")
+  names(dimnames(syntheticcpspopsHA))[1]<-c("s")
+  dimnames(syntheticcpspopsHA)[1]<-list(names(syntheticcpspops))
+  Hmisc::label(syntheticcpspopsHA)<-"Total for household h, synthetisation method z, employment status y, and month m"
+  save(syntheticcpspopsHA,file=file.path(resultsfolder,"Simu_syntheticcpspopsHA.rda"))
+  rm(syntheticcpspops,syntheticcpspopsHA);gc()}
+#2.5. Computation of (true) population totals
 if(!file.exists(file.path(resultsfolder,"Simu_Populationtotals.rda"))){
   load(file.path(resultsfolder,"Simu_syntheticcpspopsHA.rda"))
-Populationtotals<-plyr::aaply(syntheticcpspopsHA,c(1,3:4),sum,.progress="text")#.parallel=TRUE)
-Hmisc::label(Populationtotals)<-"Total for synthetisation method z, employment status y, and month m"
-save(Populationtotals,file=file.path(resultsfolder ,"Simu_Populationtotals.rda"))
-rm(Populationtotals,syntheticcpspopsHA);gc()}
-#stopCluster(cl)
+  Populationtotals<-plyr::aaply(syntheticcpspopsHA,c(1,3:4),sum,.progress="text")#.parallel=TRUE)
+  Hmisc::label(Populationtotals)<-"Total for synthetisation method z, employment status y, and month m"
+  save(Populationtotals,file=file.path(resultsfolder ,"Simu_Populationtotals.rda"))
+  rm(Populationtotals,syntheticcpspopsHA);gc()}
 
+#3. Estimation
+#3.1. Compute all month in sample estimates
+if(!file.exists(file.path(resultsfolder,"Simu_misestimates.rda"))){
+  load(file.path(resultsfolder ,"Simu_syntheticcpspopsHA.rda"))
+  misestimates<-800*plyr::maply(expand.grid(i=1:1000,m=1:85,misi=1:8),misH,syntheticcpspopsHA=syntheticcpspopsHA,.progress="text")#.parallel=TRUE)
+  dimnames(misestimates)[[2]]<-dimnames(syntheticcpspopsHA)[[4]]
+  names(dimnames(misestimates))<-c("i","m","j","s","y")
+  Hmisc::label(misestimates)<-"Month in sample estimate for longitudinal sample i, month m, rotation group mis j, synthetisation procedure s, employment statys y"
+  save(misestimates,file=file.path(resultsfolder ,"Simu_misestimates.rda"))
+  rm(misestimates,syntheticcpspopsHA);gc()}
 
-#2.4. Estimation (for more details, see misH function)
-#list.tablesA<-list.tablesAf(syntheticcpspopsHA,AllsamplesH)
-misestimates<-800*plyr::maply(expand.grid(i=1:1000,m=1:85,misi=1:8),misH,syntheticcpspopsHA=syntheticcpspopsHA,.progress="text")#.parallel=TRUE)
-dimnames(misestimates)[[2]]<-dimnames(syntheticcpspopsHA)[[4]]
-names(dimnames(misestimates))<-c("i","m","j","s","y")
-Hmisc::label(misestimates)<-"Month in sample estimate for longitudinal sample i, month m, rotation group mis j, synthetisation procedure s, employment statys y"
-gc()
-save(misestimates,file=file.path(resultsfolder ,"Simu_misestimates.rda"))
-#2.5. Computation of direct estimator
-Direct<-plyr::aaply(misestimates,c(1:2,4:5),sum,.progress="text")
-save(Direct,file=file.path(resultsfolder ,"Simu_Direct.rda"))
-#2.6. Computation of Sigma          
-Sigmas<-plyr::aaply(misestimates,4,function(x){
-  Sigma=array(var(array(x,
-                        c(dim(x)[1],prod(dim(x)[2:4])))),
-              rep(dim(x)[2:4],2))
-  dimnames(Sigma)<-rep(dimnames(x)[2:4],2)
-  names(dimnames(Sigma))<-paste0(names(dimnames(Sigma)),rep(1:2,each=3))
-  Sigma},.progress="text")
-Hmisc::label(Sigmas)<-"array: for population s, covariance between months in sample estimate for month m1m group j1, and employment status y1 and month in sample estimate for month m2, group j2, and status y2"
-save(Sigmas,file=file.path(resultsfolder ,"Simu_Sigmas.rda"))
-#load(file.path(resultsfolder,"Simu_Sigmas.rda"))
-# Computation of coefficients for Best linear estimates (Yansaneh fuller)
+#3.2. Computation of direct estimator
+if(!file.exists(file.path(resultsfolder,"Simu_Direct.rda"))){
+  load(file.path(resultsfolder ,"Simu_misestimates.rda"))
+  Direct<-plyr::aaply(misestimates,c(1:2,4:5),sum,.progress="text")
+  save(Direct,file=file.path(resultsfolder ,"Simu_Direct.rda"))
+  rm(misestimates,Direct);gc()}
 
-YF_coeffs<-plyr::aaply(Sigmas,1,function(Sigma){CoeffYF(Sigma)},.progress="text")
-names(dimnames(YF_coeffs)[[1]])<-dimnames(YF_coeffs)[[1]]
-save(YF_coeffs,file=file.path(resultsfolder ,"Simu_YF_coeffs.rda"))
+#3.3. Computation of the variance covariance matrix of the month in sample estimates
+if(!file.exists(file.path(resultsfolder,"Simu_Sigmas.rda"))){
+  load(file.path(resultsfolder ,"Simu_misestimates.rda"))
+  Sigmas<-plyr::aaply(misestimates,4,function(x){
+    Sigma=array(var(array(x,
+                          c(dim(x)[1],prod(dim(x)[2:4])))),
+                rep(dim(x)[2:4],2))
+    dimnames(Sigma)<-rep(dimnames(x)[2:4],2)
+    names(dimnames(Sigma))<-paste0(names(dimnames(Sigma)),rep(1:2,each=3))
+    Sigma},.progress="text")
+  Hmisc::label(Sigmas)<-"array: for population s, covariance between months in sample estimate for month m1m group j1, and employment status y1 and month in sample estimate for month m2, group j2, and status y2"
+  save(Sigmas,file=file.path(resultsfolder ,"Simu_Sigmas.rda"))
+  rm(misestimates,Sigmas);gc()}
 
+#3.4. Computation of coefficients for Best linear estimates (Yansaneh fuller)
+if(!file.exists(file.path(resultsfolder,"Simu_Sigmas.rda"))){
+  load(file.path(resultsfolder ,"Sigmas.rda"))
+  YF_weights<-plyr::aaply(Sigmas,1,function(Sigma){CompositeRegressionEstimation::CoeffYF(Sigma)},.progress="text")
+  names(dimnames(YF_weights)[[1]])<-dimnames(YF_weights)[[1]]
+  save(YF_weights,file=file.path(resultsfolder ,"Simu_YF_weights.rda"))
+  rm(YF_weights,Sigmas,Sigmas);gc()}
 
-# Computation of coefficients Best AK estimator
+#3.5. Computation of coefficients Best AK estimator
+if(!file.exists(file.path(resultsfolder,"Simu_coeffAK3.rda"))){
+  load(file.path(resultsfolder,"Simu_Sigmas.rda"))
+  load(file.path(resultsfolder,"Simu_Populationtotals.rda"))
+  coeffAK3<-plyr::aaply(1:3,1,function(i){CompositeRegressionEstimation::bestAK3(Sigmas[i,,,,,,],t(Populationtotals[i,,]))},.progress="text")
+  dimnames(coeffAK3)[1]<-dimnames(Populationtotals)[1]
+  names(dimnames(coeffAK3))<-c("s","c")
+  Hmisc::label(coeffAK3)<-"matrix M of 6-length vectors, where M[s,c] is the set of ak coefficients (a1, a2, a3, k1, k2, k3) optimum for population s and criterium c"
+  coeffAK3<-cbind(coeffAK3, CPSmethod=rep(list(numeric(6)),3))
+  coeffAK3[[1,4]]<-coeffAK3[[2,4]]<-coeffAK3[[3,4]]<-CPS_AK()
+  save(coeffAK3,file=file.path(resultsfolder ,"Simu_coeffAK3.rda"))
+  rm(coeffAK3s,Sigmas);gc()}
 
+#3.6. Computation of coefficients Best AK constrained estimator
+if(!file.exists(file.path(resultsfolder,"Simu_coeffAK3sconstraint.rda"))){
+  coeffAK3sconstraint<-plyr::aaply(1:3,1,function(i){
+    CompositeRegressionEstimation::bestAK3contraint(Sigmas[i,,,,,,],t(Populationtotals[i,,]))},.progress="text")
+  save(coeffAK3sconstraint,file=file.path(resultsfolder ,"Simu_coeffAK3sconstraint.rda"))
+  rm(coeffAK3sconstraint,Sigmas);gc()}
 
-####################################################
-#
-load(file.path(resultsfolder,"Simu_Sigmas.rda"))
-load(file.path(resultsfolder,"Simu_Populationtotals.rda"))
-coeffAK3s<-plyr::aaply(1:3,1,function(i){bestAK3(Sigmas[i,,,,,,],t(Populationtotals[i,,]))})
-save(coeffAK3s,file=file.path(resultsfolder ,"Simu_coeffAK3.rda"))
-
-coeffAK3sconstraint<-plyr::aaply(1:3,1,function(i){
-  bestAK3contraint(Sigmas[i,,,,,,],t(Populationtotals[i,,]))})
-save(coeffAK3sconstraint,file=file.path(resultsfolder ,"Simu_coeffAK3sconstraint.rda"))
-
-####################################################  
-#Computation of linear estimators
-#YF
-load(file.path(resultsfolder ,"Simu_misestimates.rda"))
-load(file.path(resultsfolder ,"Simu_YF_coeffs.rda"))
-load(file.path(resultsfolder,"Simu_Sigmas.rda"))
-
-YFcomprep<-plyr::aaply(dimnames(YF_coeffs)[[1]],1, function(i){
-  plyr::aaply(misestimates[,,,i,],1,function(X){
-    array(YF_coeffs[i,,]%*%c(X),c(3,dim(YF_coeffs)[2]/3))})
-})
-dimnames(YFcomprep)[3:4]<-dimnames(Sigmas)[c(4,2)]
-YFcomprep<-addUtoarray(YFcomprep,3)
-save(YFcomprep,file=file.path(resultsfolder ,"Simu_coeffAK3.rda"))
-
-####################################################
-# Computation of Reg Comp, MA
-####################################################
-load(file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
-popnums<-names(syntheticcpspops)
-biass=c("")
-hrmis=as.factor(rep(8:1,each=100))
-un=rep(1,800)
-
-MRRcomp<-plyr::aaply(popnums,1,function(popnum){
-  plyr::aaply(1:1000,1,function(i){
-    list.tables<-lapply(1:85,function(j){    
-      cbind(syntheticcpspops[[popnum]][[j]][samplerule(i,1:800,j),],hrmis,un)})
-    names(list.tables)<-names(syntheticcpspops[[1]])
-    #MRR
-    mrr<-MR(list.tables=list.tables, w="pwsswgt", id=c("hrlongid",  "pulineno"), 
-            list.xMR="pumlrR", list.x1="un", list.x2=NULL,list.y="pumlrR", 
-            list.dft.x2=NULL,Alpha=c(0,seq(0.5,1,length.out=11)),theta=3/4)$dfEst},
-    .progress = "text")})
-dimnames(MRRcomp)[[1]]<-popnums
-names(dimnames(MRRcomp))[1:2]<-c("population","seed")
-MRRcomp<-addUtoarray(MRRcomp,4,uenames=c(u="pumlrR_n0",e="pumlrR_n1","r"="r"))
-save(MRRcomp,file=file.path(resultsfolder,"Simu_MRRcomp.rda"))
-load(file=file.path(resultsfolder,"Simu_MRRcomp.rda"))
-
-
-machin<-function(toto,dimee=FALSE,adde2=adde2){
-  
-  if(is.element(toto,what)){
-    sapply(paste0(toto,"comp",adde1,1:nrep,adde2),charge)  
-    XX=addUto1000matrices(toto,"_rep")
-    assign(paste0(toto,"comprep"),XX)
-    if(dimee){dimnames(XX)[[3]]<-paste0(toto,dimnames(XX)[[3]])}
-    eval(parse(text=Sauve(paste0(toto,"comprep"),adde2)))
-    rm(list=paste0(toto,"comp_rep",1:nrep))
-    system(paste0("cd ",resultsfolder,";rm ",paste(paste0(toto,"comp",adde1,1:nrep,adde2,".Rdata"),collapse=" ")))}
+#3.7. Computation of YF linear estimators
+if(!file.exists(file.path(resultsfolder,"Simu_YFcomprep.rda"))){
+  load(file.path(resultsfolder ,"Simu_misestimates.rda"))
+  load(file.path(resultsfolder ,"Simu_YF_weights.rda"))
+  YFcomprep<-plyr::aaply(dimnames(YF_weights)[[1]],1, function(i){
+    plyr::aaply(misestimates[,,,i,],1,function(X){
+      array(YF_weights[i,,]%*%c(X),c(3,dim(YF_weights)[2]/3))})
+  })
+  dimnames(YFcomprep)[3:4]<-dimnames(Sigmas)[c(4,2)]
+  YFcomprep<-addUtoarray(YFcomprep,3)
+  save(YFcomprep,file=file.path(resultsfolder ,"Simu_YFcomprep.rda"))
+  rm(YFcomprep,misestimates,YF_weights);gc()
 }
 
-machin("MRR",TRUE,adde2)
 
-if(is.element("S",what)){
-  sapply(list.adde2bis,
-         function(adde2){
-           charge(paste0("Scomppop",adde2))
-           ScomppopU <-unemploymentcount(Scomppop)[,studyvar]
-           ScomppopUdiff<-ScomppopU[-1,studyvar]-ScomppopU[-nrow(ScomppopU),studyvar]  
-           ScompUrep<-array(0,c(85,length(studyvar),1,7))
-           dimnames(ScompUrep)<-list(
-             tables.entree,studyvar,"S",c("mean" ,   "var"   ,  "bias"   , "mse"   ,  "una"  ,   "relbias", "cv"))
-           ScompUrep[,studyvar,"S","mean"]<-ScomppopU[,studyvar]
-           
-           ScompUrepdiff<-ScompUrep[-1,studyvar,,,drop=FALSE]-
-             ScompUrep[-dim(ScompUrep)[1],studyvar,,,drop=FALSE]
-           
-           #sapply(c("S2comprep","RAcomprep","BCLcomprep","BCL0comprep","BCL2comprep","MRRcomprep","AK2_papacomprep","BCLratiocomprep"),charge)
-           eval(parse(text=Sauve("ScompUrep",adde2)))
-           eval(parse(text=Sauve("ScompUrepdiff",adde2)))
-           eval(parse(text=Sauve("ScomppopU",adde2)))
-           eval(parse(text=Sauve("ScomppopUdiff",adde2)))})}
+#3.8. Computation of AK linear estimators
+if(!file.exists(file.path(resultsfolder,"Simu_AKcomprep.rda"))){
+  load(file.path(resultsfolder ,"Simu_misestimates.rda"))
+  load(file.path(resultsfolder ,"Simu_coeffAK3.rda"))
+  #compute estimates with CPS ak coefficients
+  
+  plyr::aaply(coeffAK3,1:2,function(x){
+    CompositeRegressionEstimation::CPS_AK_est(
+      
+    )})
+  
+  #compute weights
+  AK3_weights<-
+    plyr::aaply(dimnames(coeffAK3)[1],1,function(s){
+      plyr::aaply(dimnames(coeffAK3)[2],1,function(cc){
+        CPS_AK_coeff.array.fl(dim(misestimates[1,,,1,])[1],coeffAK3,simplify=FALSE)
+    })})
+  AK3_weights<-
+    plyr::aaply(coeffAK3,1:2,function(x){CPS_AK_coeff.array.fl(dim(misestimates[1,,,1,])[1],x,simplify=FALSE)})
+  
+  
+  
+  
+  CPS_AK_coeff.array.fl(dim(misestimates[1,,,1,])[1],coeffAK3[1],simplify=FALSE)
+  AKcomprep<-plyr::aaply(dimnames(coeffAK3)[[1]],1, function(i){
+    plyr::aaply(misestimates[,,,i,],1,function(X){
+      array(coeffAK3s[i,,]%*%c(X),c(3,dim(coeffAK3s)[2]/3))})
+  })
+  dimnames(AKcomprep)[3:4]<-dimnames(Sigmas)[c(4,2)]
+  AKcomprep<-addUtoarray(AKcomprep,3)
+  save(AKcomprep,file=file.path(resultsfolder ,"Simu_AKcomprep.rda"))
+  rm(AKcomprep,misestimates,coeffAK3s);gc()
+}
 
 
+#3.9.  Computation of Regression Composite
+if(!file.exists(file.path(resultsfolder,"Simu_MRRcomp.rda"))){
+  load(file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
+  popnums<-names(syntheticcpspops)
+  biass=c("")
+  hrmis=as.factor(rep(8:1,each=100))
+  un=rep(1,800)
+  
+  MRRcomp<-plyr::aaply(popnums,1,function(popnum){
+    plyr::aaply(1:1000,1,function(i){
+      list.tables<-lapply(1:85,function(j){    
+        cbind(syntheticcpspops[[popnum]][[j]][samplerule(i,1:800,j),],hrmis,un)})
+      names(list.tables)<-names(syntheticcpspops[[1]])
+      #MRR
+      mrr<-MR(list.tables=list.tables, w="pwsswgt", id=c("hrlongid",  "pulineno"), 
+              list.xMR="pumlrR", list.x1="un", list.x2=NULL,list.y="pumlrR", 
+              list.dft.x2=NULL,Alpha=c(0,seq(0.5,1,length.out=11)),theta=3/4)$dfEst},
+      .progress = "text")})
+  dimnames(MRRcomp)[[1]]<-popnums
+  names(dimnames(MRRcomp))[1:2]<-c("population","seed")
+  MRRcomp<-addUtoarray(MRRcomp,4,uenames=c(u="pumlrR_n0",e="pumlrR_n1","r"="r"))
+  save(MRRcomp,file=file.path(resultsfolder,"Simu_MRRcomp.rda"))
+  rm(MRRcomp,syntheticcpspops);gc()}
 
-
-
-
-if(any(is.element(what,c("S","S2","BCL0","BCL2","AK3","AK2","estAK3","MRR","YF","estYF","MA")))){  
-  sapply(list.adde2bis,
-         function(adde2){
-           sapply(paste0(c("S2","BCL0","BCL2","AK3","AK2",#"estAK2",
-                           "estAK3","MRR","YF","estYF"),paste0("comprep",adde2)),charge)
-           # charge(paste0("AK3compreptest",adde2)
-           charge(paste0("ScompUrep",adde2))
-           charge(paste0("ScompUrepdiff",adde2))
-           charge(paste0("ScomppopU",adde2))
-           charge(paste0("ScomppopUdiff",adde2))
-           Recap<-abind(ScompUrep[,studyvar,,,drop=FALSE],
-                        calcvarmeana(S2comprep),
-                        calcvarmeana(MRRcomprep),
-                        calcvarmeana(AK2comprep),
-                        calcvarmeana(AK3comprep),
-                        #    calcvarmeana(BCL2comprep),
-                        calcvarmeana(estAK3comprep),
-                        calcvarmeana(YFcomprep),
-                        calcvarmeana(estYFcomprep),
-                        calcvarmeana(BCL0comprep),
-                        along = 3)
-           compUrepdiff<-
-             abind(calcvarmeana(difff(S2comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                   calcvarmeana(difff(MRRcomprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                   calcvarmeana(difff(AK2comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                   calcvarmeana(difff(AK3comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                   #calcvarmeana(difff(BCL2comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                   calcvarmeana(difff(estAK3comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                   calcvarmeana(difff(YFcomprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                   calcvarmeana(difff(estYFcomprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                   calcvarmeana(difff(BCL0comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
-                   along = 3)
-           Recapdiff<-abind(ScompUrepdiff,
-                            compUrepdiff, along = 3) 
-           Recap<-abind(Recap,
-                        array(
-                          apply(Recap[,,,"mse"],3,function(x){x/Recap[,,"S2","mse"]}),
-                          dim(Recap)[1:3])
-                        ,along=4)
-           dimnames(Recap)[[4]][8]<-"ratmse"        
-           Recapdiff<-abind(Recapdiff,
-                            array(
-                              apply(Recapdiff[,,,"mse"],3,function(x){x/Recapdiff[,,"S2","mse"]}),
-                              dim(Recapdiff)[1:3])
-                            ,along=4)  
-           dimnames(Recapdiff)[[4]][8]<-"ratmse"
-           
-           dimnames(Recap)[[3]][3:24]<-paste0("MRR",dimnames(Recap)[[3]][3:24])
-           dimnames(Recapdiff)[[3]][3:24]<-paste0("MRR",dimnames(Recapdiff)[[3]][3:24])
-           save(     Recap,
-                     Recapdiff,
-                     file=paste0("replications",adde2,".Rdata"))})}
-LL<-lapply(list.adde2,function(adde2){
-  load(paste0("replications",adde2,".Rdata"))
-  return(list(Recap=Recap,
-              Recapdiff=Recapdiff))});
-names(LL)<-list.adde2
-RecapA<-do.call(abind,c(lapply(LL,function(l){l$Recap}),list(along=5)))
-RecapdiffA<-do.call(abind,c(lapply(LL,function(l){l$Recapdiff}),list(along=5)))
-save(     RecapA,
-          RecapdiffA,
-          file="replications.Rdata")
+#3.10. Stack everything together.
+if(!file.exists(file.path(resultsfolder,"Simu_all_estimates_no_rgb.rda"))){
+  
+  
+  #4. Redo all simulations with "rotation group bias".
+  
+  
+  #5. Compute variance and bias of all estimates.
+  
+  
+  
+  
+  #6. Compute best alpha.
+  
+  machin<-function(toto,dimee=FALSE,adde2=adde2){
+    
+    if(is.element(toto,what)){
+      sapply(paste0(toto,"comp",adde1,1:nrep,adde2),charge)  
+      XX=addUto1000matrices(toto,"_rep")
+      assign(paste0(toto,"comprep"),XX)
+      if(dimee){dimnames(XX)[[3]]<-paste0(toto,dimnames(XX)[[3]])}
+      eval(parse(text=Sauve(paste0(toto,"comprep"),adde2)))
+      rm(list=paste0(toto,"comp_rep",1:nrep))
+      system(paste0("cd ",resultsfolder,";rm ",paste(paste0(toto,"comp",adde1,1:nrep,adde2,".Rdata"),collapse=" ")))}
+  }
+  
+  machin("MRR",TRUE,adde2)
+  
+  if(is.element("S",what)){
+    sapply(list.adde2bis,
+           function(adde2){
+             charge(paste0("Scomppop",adde2))
+             ScomppopU <-unemploymentcount(Scomppop)[,studyvar]
+             ScomppopUdiff<-ScomppopU[-1,studyvar]-ScomppopU[-nrow(ScomppopU),studyvar]  
+             ScompUrep<-array(0,c(85,length(studyvar),1,7))
+             dimnames(ScompUrep)<-list(
+               tables.entree,studyvar,"S",c("mean" ,   "var"   ,  "bias"   , "mse"   ,  "una"  ,   "relbias", "cv"))
+             ScompUrep[,studyvar,"S","mean"]<-ScomppopU[,studyvar]
+             
+             ScompUrepdiff<-ScompUrep[-1,studyvar,,,drop=FALSE]-
+               ScompUrep[-dim(ScompUrep)[1],studyvar,,,drop=FALSE]
+             
+             #sapply(c("S2comprep","RAcomprep","BCLcomprep","BCL0comprep","BCL2comprep","MRRcomprep","AK2_papacomprep","BCLratiocomprep"),charge)
+             eval(parse(text=Sauve("ScompUrep",adde2)))
+             eval(parse(text=Sauve("ScompUrepdiff",adde2)))
+             eval(parse(text=Sauve("ScomppopU",adde2)))
+             eval(parse(text=Sauve("ScomppopUdiff",adde2)))})}
+  
+  
+  
+  
+  
+  
+  if(any(is.element(what,c("S","S2","BCL0","BCL2","AK3","AK2","estAK3","MRR","YF","estYF","MA")))){  
+    sapply(list.adde2bis,
+           function(adde2){
+             sapply(paste0(c("S2","BCL0","BCL2","AK3","AK2",#"estAK2",
+                             "estAK3","MRR","YF","estYF"),paste0("comprep",adde2)),charge)
+             # charge(paste0("AK3compreptest",adde2)
+             charge(paste0("ScompUrep",adde2))
+             charge(paste0("ScompUrepdiff",adde2))
+             charge(paste0("ScomppopU",adde2))
+             charge(paste0("ScomppopUdiff",adde2))
+             Recap<-abind(ScompUrep[,studyvar,,,drop=FALSE],
+                          calcvarmeana(S2comprep),
+                          calcvarmeana(MRRcomprep),
+                          calcvarmeana(AK2comprep),
+                          calcvarmeana(AK3comprep),
+                          #    calcvarmeana(BCL2comprep),
+                          calcvarmeana(estAK3comprep),
+                          calcvarmeana(YFcomprep),
+                          calcvarmeana(estYFcomprep),
+                          calcvarmeana(BCL0comprep),
+                          along = 3)
+             compUrepdiff<-
+               abind(calcvarmeana(difff(S2comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                     calcvarmeana(difff(MRRcomprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                     calcvarmeana(difff(AK2comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                     calcvarmeana(difff(AK3comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                     #calcvarmeana(difff(BCL2comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                     calcvarmeana(difff(estAK3comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                     calcvarmeana(difff(YFcomprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                     calcvarmeana(difff(estYFcomprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                     calcvarmeana(difff(BCL0comprep[,studyvar,,,drop=FALSE]),Ecomp=ScomppopUdiff[,studyvar]),
+                     along = 3)
+             Recapdiff<-abind(ScompUrepdiff,
+                              compUrepdiff, along = 3) 
+             Recap<-abind(Recap,
+                          array(
+                            apply(Recap[,,,"mse"],3,function(x){x/Recap[,,"S2","mse"]}),
+                            dim(Recap)[1:3])
+                          ,along=4)
+             dimnames(Recap)[[4]][8]<-"ratmse"        
+             Recapdiff<-abind(Recapdiff,
+                              array(
+                                apply(Recapdiff[,,,"mse"],3,function(x){x/Recapdiff[,,"S2","mse"]}),
+                                dim(Recapdiff)[1:3])
+                              ,along=4)  
+             dimnames(Recapdiff)[[4]][8]<-"ratmse"
+             
+             dimnames(Recap)[[3]][3:24]<-paste0("MRR",dimnames(Recap)[[3]][3:24])
+             dimnames(Recapdiff)[[3]][3:24]<-paste0("MRR",dimnames(Recapdiff)[[3]][3:24])
+             save(     Recap,
+                       Recapdiff,
+                       file=paste0("replications",adde2,".Rdata"))})}
+  LL<-lapply(list.adde2,function(adde2){
+    load(paste0("replications",adde2,".Rdata"))
+    return(list(Recap=Recap,
+                Recapdiff=Recapdiff))});
+  names(LL)<-list.adde2
+  RecapA<-do.call(abind,c(lapply(LL,function(l){l$Recap}),list(along=5)))
+  RecapdiffA<-do.call(abind,c(lapply(LL,function(l){l$Recapdiff}),list(along=5)))
+  save(     RecapA,
+            RecapdiffA,
+            file="replications.Rdata")
 }
 
 
@@ -279,7 +340,6 @@ load(file.path(resultsfolder ,"Simu_coeffAK3.rda"))
 coeffAK3s
 
 # Table 3
-
 Best alpha
 
 # Figure 1
