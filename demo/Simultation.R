@@ -52,11 +52,6 @@ if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspops.rda"))){
   save(syntheticcpspops,file=file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
   rm(Totals,crossTotals,syntheticcpspops);gc()}
 
-if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspopsA.rda"))){
-  syntheticcpspopsA<-list.tablesAf()
-  save(syntheticcpspopsA,file=file.path(resultsfolder ,"Simu_syntheticcpspopsA.rda"))
-  rm(syntheticcpspopsA);gc()}
-
 
 #2.4. Aggregation of employment status by household and save in an array
 if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspopsHA.rda"))){
@@ -79,19 +74,37 @@ if(!file.exists(file.path(resultsfolder,"Simu_Populationtotals.rda"))){
 #3.1. Compute all month in sample estimates
 if(!file.exists(file.path(resultsfolder,"Simu_misestimates.rda"))){
   load(file.path(resultsfolder ,"Simu_syntheticcpspopsHA.rda"))
-  misestimates<-800*plyr::maply(expand.grid(i=1:1000,m=1:85,misi=1:8),misH,syntheticcpspopsHA=syntheticcpspopsHA,.progress="text")#.parallel=TRUE)
+  misestimates<-1000*plyr::maply(expand.grid(i=1:1000,m=1:85,misi=1:8),misH,syntheticcpspopsHA=syntheticcpspopsHA,.progress="text")#.parallel=TRUE)
   dimnames(misestimates)[[2]]<-dimnames(syntheticcpspopsHA)[[4]]
   names(dimnames(misestimates))<-c("i","m","j","s","y")
   Hmisc::label(misestimates)<-"Month in sample estimate for longitudinal sample i, month m, rotation group mis j, synthetisation procedure s, employment statys y"
   save(misestimates,file=file.path(resultsfolder ,"Simu_misestimates.rda"))
   rm(misestimates,syntheticcpspopsHA);gc()}
 
+if(!file.exists(file.path(resultsfolder,"Simu_misestimatesbias.rda"))){
+  set.seed(1)
+  load(file.path(resultsfolder,"Simu_misestimates.rda"))
+  misestimatesbias<-misestimates
+  misestimatesbias[,,1,,]<-1000*plyr::aaply(misestimates[,,1,,]/1000,1:3,
+                                            function(x){if(x[2]>0){matrix(x+rbinom(1,x[2],.2)*c(1,-1,0))}else{x}},.progress = "text")
+  Hmisc::label(misestimatesbias)<-"Rotation group biased month in sample estimate for longitudinal sample i, month m, rotation group mis j, synthetisation procedure s, employment statys y"
+  save(misestimatesbias,file=file.path(resultsfolder ,"Simu_misestimatesbias.rda"))
+  Misestimates<-abind::abind("false"=misestimates,"true"=misestimatesbias,along=6)
+  names(dimnames(Misestimates))[6]<-"b"
+  save(Misestimates,file=file.path(resultsfolder ,"Simu_MMisestimates.rda"))
+  rm(misestimates,Misestimates,misestimatesbias);gc()}
+
+
+
+
+
+
 #3.2. Computation of direct estimator
 if(!file.exists(file.path(resultsfolder,"Simu_Direct.rda"))){
-  load(file.path(resultsfolder ,"Simu_misestimates.rda"))
-  Direct<-plyr::aaply(misestimates,c(1:2,4:5),sum,.progress="text")
+  load(file.path(resultsfolder ,"Simu_MMisestimates.rda"))
+  Direct<-plyr::aaply(Misestimates,c(1:2,4:6),sum,.progress="text")
   save(Direct,file=file.path(resultsfolder ,"Simu_Direct.rda"))
-  rm(misestimates,Direct);gc()}
+  rm(Misestimates,Direct);gc()}
 
 #3.3. Computation of the variance covariance matrix of the month in sample estimates
 if(!file.exists(file.path(resultsfolder,"Simu_Sigmas.rda"))){
@@ -152,28 +165,20 @@ if(!file.exists(file.path(resultsfolder,"Simu_YFcomprep.rda"))){
 
 #3.8. Computation of AK linear estimators
 if(!file.exists(file.path(resultsfolder,"Simu_AKcomprep.rda"))){
-  load(file.path(resultsfolder ,"Simu_misestimates.rda"))
+  load(file.path(resultsfolder ,"Simu_MMisestimates.rda"))
   load(file.path(resultsfolder ,"Simu_coeffAK3.rda"))
-  #compute estimates with CPS ak coefficients
-  
-  
-  plyr::aaply(coeffAK3,1:2,function(x){
-    CompositeRegressionEstimation::CPS_AK_est(
-      
-    )})
-  
   #compute weights
   AK3_weights<-
     plyr::aaply(coeffAK3,1:2,function(x){
       CPS_AK_coeff.array.f(dim(misestimates)[match("m",names(dimnames(misestimates)))],x,simplify=FALSE)})
-  
-  AKcomprep<-TensorDB::"%.%"(AK3_weights,misestimates,
-                          I_A=list(c=c("s"),n=c("c","i2","m2"),p=c( "i1", "mis1", "m1")),
-                          I_B=list(c="s",p=c("y","j","m"),q="i"))
+  #compute estimates
+  AKcomprep<-TensorDB::"%.%"(AK3_weights,Misestimates,
+                             I_A=list(c=c("s"),n=c("c","i2","m2"),p=c( "i1", "mis1", "m1")),
+                             I_B=list(c="s",p=c("y","j","m"),q=c("i","b")))
   
   AKcomprep<-pubBonneryChengLahiri2016::addUtoarray(AKcomprep,match("i2",names(dimnames(AKcomprep))))
   save(AKcomprep,file=file.path(resultsfolder ,"Simu_AKcomprep.rda"))
-  rm(AKcomprep,AK3_weights,coeffAK3,misestimates);gc()
+  rm(AKcomprep,AK3_weights,coeffAK3,Misestimates);gc()
 }
 
 
@@ -181,7 +186,6 @@ if(!file.exists(file.path(resultsfolder,"Simu_AKcomprep.rda"))){
 if(!file.exists(file.path(resultsfolder,"Simu_MRRcomp.rda"))){
   load(file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
   popnums<-names(syntheticcpspops)
-  biass=c("")
   hrmis=as.factor(rep(8:1,each=100))
   un=rep(1,800)
   
@@ -191,15 +195,54 @@ if(!file.exists(file.path(resultsfolder,"Simu_MRRcomp.rda"))){
         cbind(syntheticcpspops[[popnum]][[j]][samplerule(i,1:800,j),],hrmis,un)})
       names(list.tables)<-names(syntheticcpspops[[1]])
       #MRR
-      mrr<-MR(list.tables=list.tables, w="pwsswgt", id=c("hrlongid",  "pulineno"), 
+      mrr<-CompositeRegressionEstimation::MR(list.tables=list.tables, w="pwsswgt", id=c("hrlongid",  "pulineno"), 
               list.xMR="pumlrR", list.x1="un", list.x2=NULL,list.y="pumlrR", 
-              list.dft.x2=NULL,Alpha=c(0,seq(0.5,1,length.out=11)),theta=3/4)$dfEst},
+              list.dft.x2=NULL,Alpha=seq(0,1,length.out=21),theta=3/4)$dfEst},
       .progress = "text")})
   dimnames(MRRcomp)[[1]]<-popnums
   names(dimnames(MRRcomp))[1:2]<-c("population","seed")
   MRRcomp<-addUtoarray(MRRcomp,4,uenames=c(u="pumlrR_n0",e="pumlrR_n1","r"="r"))
   save(MRRcomp,file=file.path(resultsfolder,"Simu_MRRcomp.rda"))
   rm(MRRcomp,syntheticcpspops);gc()}
+
+
+
+if(!file.exists(file.path(resultsfolder,"Simu_MRRcompbias.rda"))){
+  load(file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
+  popnums<-names(syntheticcpspops)
+  hrmis=as.factor(rep(8:1,each=100))
+  un=rep(1,800)
+  load(file.path(resultsfolder,"Simu_misestimates.rda"))
+  load(file.path(resultsfolder,"Simu_misestimatesbias.rda"))
+  BB<-(misestimatesbias-misestimates)/1000
+  
+  
+  MRRcompbias<-plyr::aaply(popnums,1,function(popnum){
+    plyr::aaply(1:1000,1,function(i){
+      list.tables<-plyr::alply(1:85,1,function(m){
+        ll<-cbind(syntheticcpspops[[popnum]][[m]][samplerule(i,1:800,m),],hrmis,un)
+        x=sample((701:800)[ll[["pumlrR"]][701:800]=="1"],BB[i,m,1,popnum,1])
+        ll[["pumlrR"]][x]<-"0"
+        ll})
+      names(list.tables)<-names(syntheticcpspops[[1]])
+      #all(replicate(50,(function(){i=sample(1000,1);m=sample(85,1);popnum=sample(3,1);misestimates[i,m,1,popnum,1]/1000==table(cbind(syntheticcpspops[[popnum]][[m]][samplerule(i,1:800,m),],hrmis,un)[701:800,]$pumlrR)[["0"]]})()))
+      #MRR
+      mrr<-CompositeRegressionEstimation::MR(list.tables=list.tables, w="pwsswgt", id=c("hrlongid",  "pulineno"), 
+              list.xMR="pumlrR", list.x1="un", list.x2=NULL,list.y="pumlrR", 
+              list.dft.x2=NULL,Alpha=seq(0,1,length.out=21),theta=3/4)$dfEst},
+      .progress = "text")})
+  dimnames(MRRcompbias)[[1]]<-popnums
+  names(dimnames(MRRcompbias))[1:2]<-c("population","seed")
+  MRRcompbias<-addUtoarray(MRRcompbias,4,uenames=c(u="pumlrR_n0",e="pumlrR_n1","r"="r"))
+  save(MRRcompbias,file=file.path(resultsfolder,"Simu_MRRcompbias.rda"))
+  
+  rm(MRRcompbias,syntheticcpspops);gc()}
+
+
+
+
+
+
 
 #3.10. Stack everything together.
 if(!file.exists(file.path(resultsfolder,"Simu_all_estimates_no_rgb.rda"))){
