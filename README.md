@@ -34,7 +34,8 @@ demo(ComputeestimatesonCPSwebdata)
 ### 2.3. Results
 
 
-
+The results of this first demonstration code are the two figures obtained from real data:
+Differences from published paper come from possible difference between the online CPS data and the data that we used when we had access to the CPS data in the Census.
 ### 2.3.1. Figure 2.a.
 
 ```r
@@ -65,84 +66,25 @@ library("DanielBonnery/pubBonneryLahiriCheng2016")
 demo(Simulation)
 ```
 
+
+
+
 ### 3.2. Results
 
-### 3.2.1. Figure 1
-
-```r
-print(1)
-```
-### 3.2.2. Table 2
-
-```r
-knitr::kable(data.frame(x=1))
-```
+Here, the results slightly differ from the published paper because we did not set the seed for the paper.
+### 3.2.1. Table 2
 
 
 
-|  x|
-|--:|
-|  1|
-### 3.2.3. Table 3
-
-```r
-knitr::kable(data.frame(x=1))
-```
 
 
 
-|  x|
-|--:|
-|  1|
-### 3.2.4. Table 4
-
-```r
-knitr::kable(data.frame(x=1))
-```
 
 
 
-|  x|
-|--:|
-|  1|
-### 3.2.4. Table 5
-
-```r
-knitr::kable(data.frame(x=1))
-```
 
 
 
-|  x|
-|--:|
-|  1|
-### 3.2.4. Table 6
-
-```r
-knitr::kable(data.frame(x=1))
-```
 
 
 
-|  x|
-|--:|
-|  1|
-
-### 3.2.4. Table 7
-
-```r
-knitr::kable(data.frame(x=1))
-```
-
-
-
-|  x|
-|--:|
-|  1|
-## Bonus
-
-### Table 1
-
-```r
-CPSrotationchart()
-```

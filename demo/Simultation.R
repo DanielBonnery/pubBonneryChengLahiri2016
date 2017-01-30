@@ -380,7 +380,10 @@ if(FALSE){
 
 #Table 2
 load(file.path(resultsfolder ,"Simu_coeffAK3.rda"))
-plyr::aaply(coeffAK3,1:2,function(x){x})[,,c(1:2,4:5)]
+table2<-plyr::aaply(coeffAK3,1:2,function(x){x})[,,c(1:2,4:5)]
+table2.a<-matrix(paste("(",signif(table2[,,1],3),",",signif(table2[,,3],3),")"),dim(table2[,,1]))
+table2.b<-matrix(paste("(",signif(table2[,,2],3),",",signif(table2[,,4],4),")"),dim(table2[,,1]))
+dimnames(table2.a)<-dimnames(table2.b)<-dimnames(table2[,,1])
 
 # Table 3
 Best alpha
@@ -404,3 +407,6 @@ and unemployment level estimators
 #Table 7
 Dispersion and mean of the relative mean squared errors for different population
 and unemployment change estimators
+
+
+save(table2.a,table2.b,file=file.path(resultsfolder ,"Simu_alltablesandfigures.rda"))
