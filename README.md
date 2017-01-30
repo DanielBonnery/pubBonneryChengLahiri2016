@@ -74,17 +74,95 @@ demo(Simulation)
 Here, the results slightly differ from the published paper because we did not set the seed for the paper.
 ### 3.2.1. Table 2
 
+```r
+knitr::kable(table2.a,caption="Optimal (a_1,k_1) values for the three populations and the 3 objective functions")
+```
 
 
 
+|                       |level                  |change                |compromise            |CPSmethod     |
+|:----------------------|:----------------------|:---------------------|:---------------------|:-------------|
+|Independent            |( 0.0201 , 0.892 )     |( 0.0245 , 0.889 )    |( 0.0255 , 0.892 )    |( 0.3 , 0.4 ) |
+|2dorder                |( 0.0115 , 0.109 )     |( 0.0193 , 0.0931 )   |( 0.0171 , 0.1 )      |( 0.3 , 0.4 ) |
+|2dorder-indexdependent |( -0.00628 , -0.0321 ) |( 0.00357 , -0.0596 ) |( 0.00151 , -0.0524 ) |( 0.3 , 0.4 ) |
+
+```r
+knitr::kable(table2.b,caption="Optimal (a_2,k_2) values for the three populations and the 3 objective functions")
+```
 
 
 
+|                       |level                 |change                |compromise            |CPSmethod     |
+|:----------------------|:---------------------|:---------------------|:---------------------|:-------------|
+|Independent            |( -0.0143 , -0.1838 ) |( -0.0385 , -0.3653 ) |( -0.0065 , -0.1641 ) |( 0.4 , 0.7 ) |
+|2dorder                |( 0.0363 , 0.309 )    |( 0.0355 , 0.2779 )   |( 0.0355 , 0.2877 )   |( 0.4 , 0.7 ) |
+|2dorder-indexdependent |( 0.0534 , 0.5052 )   |( 0.0533 , 0.4788 )   |( 0.0538 , 0.4842 )   |( 0.4 , 0.7 ) |
+
+### 3.2.2. Figure 1
+
+```r
+print(1)
+```
+### 3.2.3. Table 3
+
+```r
+knitr::kable(data.frame(x=1))
+```
 
 
 
+|  x|
+|--:|
+|  1|
+### 3.2.4. Table 4
+
+```r
+knitr::kable(data.frame(x=1))
+```
 
 
 
+|  x|
+|--:|
+|  1|
+### 3.2.4. Table 5
+
+```r
+knitr::kable(data.frame(x=1))
+```
 
 
+
+|  x|
+|--:|
+|  1|
+### 3.2.4. Table 6
+
+```r
+knitr::kable(data.frame(x=1))
+```
+
+
+
+|  x|
+|--:|
+|  1|
+
+### 3.2.4. Table 7
+
+```r
+knitr::kable(data.frame(x=1))
+```
+
+
+
+|  x|
+|--:|
+|  1|
+## Bonus
+
+### Table 1
+
+```r
+CPSrotationchart()
+```
