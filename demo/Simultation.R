@@ -1,5 +1,5 @@
 #note that this program takes time. If you plan to shut down your computer before it ends, please modify resultsfolder below. All results will be stored in this folder, and results alreadu stored will not be re-computed.
-resultsfolder<-if(file.exists(file.path(file.path(Mydirectories::Dropbox.directory(),"CensusBAE/R/Computation of FR/packages/pubBonneryChengLahiri2016/"),"datanotpushed"))){file.path(Mydirectories::Dropbox.directory(),"CensusBAE/R/Computation of FR/packages/pubBonneryChengLahiri2016/datanotpushed")}else{tempdir()}
+resultsfolder<-if(file.exists("~/R/Data/CPS")){"~/R/Data/CPS"}else{getwd()}
 
 #1. Load libraries
 library(CompositeRegressionEstimation)
@@ -196,8 +196,8 @@ if(!file.exists(file.path(resultsfolder,"Simu_MRRcomp.rda"))){
       names(list.tables)<-names(syntheticcpspops[[1]])
       #MRR
       mrr<-CompositeRegressionEstimation::MR(list.tables=list.tables, w="pwsswgt", id=c("hrlongid",  "pulineno"), 
-              list.xMR="pumlrR", list.x1="un", list.x2=NULL,list.y="pumlrR", 
-              list.dft.x2=NULL,Alpha=seq(0,1,length.out=21),theta=3/4)$dfEst},
+                                             list.xMR="pumlrR", list.x1="un", list.x2=NULL,list.y="pumlrR", 
+                                             list.dft.x2=NULL,Alpha=seq(0,1,length.out=21),theta=3/4)$dfEst},
       .progress = "text")})
   dimnames(MRRcomp)[[1]]<-popnums
   names(dimnames(MRRcomp))[1:2]<-c("population","seed")
@@ -228,8 +228,8 @@ if(!file.exists(file.path(resultsfolder,"Simu_MRRcompbias.rda"))){
       #all(replicate(50,(function(){i=sample(1000,1);m=sample(85,1);popnum=sample(3,1);misestimates[i,m,1,popnum,1]/1000==table(cbind(syntheticcpspops[[popnum]][[m]][samplerule(i,1:800,m),],hrmis,un)[701:800,]$pumlrR)[["0"]]})()))
       #MRR
       mrr<-CompositeRegressionEstimation::MR(list.tables=list.tables, w="pwsswgt", id=c("hrlongid",  "pulineno"), 
-              list.xMR="pumlrR", list.x1="un", list.x2=NULL,list.y="pumlrR", 
-              list.dft.x2=NULL,Alpha=seq(0,1,length.out=21),theta=3/4)$dfEst},
+                                             list.xMR="pumlrR", list.x1="un", list.x2=NULL,list.y="pumlrR", 
+                                             list.dft.x2=NULL,Alpha=seq(0,1,length.out=21),theta=3/4)$dfEst},
       .progress = "text")})
   dimnames(MRRcompbias)[[1]]<-popnums
   names(dimnames(MRRcompbias))[1:2]<-c("population","seed")
