@@ -7,7 +7,6 @@ library(CompositeRegressionEstimation)
 library(plyr)
 library(dataCPS)
 #library(doParallel)
-
 #2. Create synthetic populations
 #2.0. Estimate counts from CPS web data.
 
@@ -103,7 +102,9 @@ if(!file.exists(file.path(resultsfolder,"Simu_misestimatesbias.rda"))){
 if(!file.exists(file.path(resultsfolder,"Simu_Direct.rda"))){
   load(file.path(resultsfolder ,"Simu_MMisestimates.rda"))
   Direct<-plyr::aaply(Misestimates,c(1:2,4:6),sum,.progress="text")
-  save(Direct,file=file.path(resultsfolder ,"Simu_Direct.rda"))
+  names(dimnames(Direct))<-c("i","m","s","y","b")
+  Hmisc::label(Direct)<-"Direct estimate for month m, variable y, synthetic population s, seed i, presence of bias b"
+    save(Direct,file=file.path(resultsfolder ,"Simu_Direct.rda"))
   rm(Misestimates,Direct);gc()}
 
 #3.3. Computation of the variance covariance matrix of the month in sample estimates
@@ -158,6 +159,8 @@ if(!file.exists(file.path(resultsfolder,"Simu_YFcomprep.rda"))){
   })
   dimnames(YFcomprep)[3:4]<-dimnames(Sigmas)[c(4,2)]
   YFcomprep<-addUtoarray(YFcomprep,3)
+  names(dimnames(YFcomprep))<-c("s","i","y","m")
+  Hmisc::label(YFcomprep)<-"Estimate for month m, variable y, seed i, population s"
   save(YFcomprep,file=file.path(resultsfolder ,"Simu_YFcomprep.rda"))
   rm(YFcomprep,misestimates,YF_weights);gc()
 }
@@ -183,7 +186,7 @@ if(!file.exists(file.path(resultsfolder,"Simu_AKcomprep.rda"))){
 
 
 #3.9.  Computation of Regression Composite
-if(!file.exists(file.path(resultsfolder,"Simu_MRRcomp.rda"))){
+if(!file.exists(file.path(resultsfolder,"Simu_MRRcompb0.rda"))){
   load(file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
   popnums<-names(syntheticcpspops)
   hrmis=as.factor(rep(8:1,each=100))
@@ -201,9 +204,9 @@ if(!file.exists(file.path(resultsfolder,"Simu_MRRcomp.rda"))){
       .progress = "text")})
   dimnames(MRRcomp)[[1]]<-popnums
   names(dimnames(MRRcomp))[1:2]<-c("population","seed")
-  MRRcomp<-addUtoarray(MRRcomp,4,uenames=c(u="pumlrR_n0",e="pumlrR_n1","r"="r"))
-  save(MRRcomp,file=file.path(resultsfolder,"Simu_MRRcomp.rda"))
-  rm(MRRcomp,syntheticcpspops);gc()}
+  MRRcompb0<-addUtoarray(MRRcomp,4,uenames=c(u="pumlrR_n0",e="pumlrR_n1","r"="r"))
+  save(MRRcompb0,file=file.path(resultsfolder,"Simu_MRRcompb0.rda"))
+  rm(MRRcompb0,MRRcomp,syntheticcpspops);gc()}
 
 
 
@@ -238,15 +241,35 @@ if(!file.exists(file.path(resultsfolder,"Simu_MRRcompbias.rda"))){
   
   rm(MRRcompbias,syntheticcpspops);gc()}
 
+  
 
-
+if(!file.exists(file.path(resultsfolder,"Simu_MRRcomp.rda"))){
+  load(file.path(resultsfolder ,"Simu_MRRcompb0.rda"))
+  load(file.path(resultsfolder ,"Simu_MRRcompbias.rda"))
+  MRRcomp<-abind::abind(False=MRRcompb0,True=MRRcompbias,along=6)
+  names(dimnames(MRRcomp))<-c("s","i","m","y","e","b")
+  Hmisc::label(MRRcomp)<-"Estimate of synthetic population s, seed i, month m, variable y, estimator e, bias b"
+  save(MRRcomp,file=file.path(resultsfolder,"Simu_MRRcomp.rda"))
+  
+  rm(MRRcompbias,MRRcompb0MRRcomp);gc()
+}
+  
 
 
 
 
 #3.10. Stack everything together.
 if(!file.exists(file.path(resultsfolder,"Simu_all_estimates_no_rgb.rda"))){
-}
+load(file.path(resultsfolder,"Simu_MRRcomp.rda"))
+load(file=file.path(resultsfolder ,"Simu_AKcomprep.rda"))
+load(file.path(resultsfolder ,"Simu_YFcomprep.rda"))
+load(file.path(resultsfolder ,"Simu_Direct.rda"))  
+names(dimnames(MRRcomp))
+  names(dimnames(AKcomprep))
+  names(dimnames(YFcomprep))
+  names(dimnames(Direct))
+  
+  }
 
 #4. Redo all simulations with "rotation group bias".
 
