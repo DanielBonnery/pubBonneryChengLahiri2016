@@ -5,7 +5,7 @@ resultsfolder<-if(file.exists("~/R/Data/CPS")){"~/R/Data/CPS"}else{
 
 #1. Load libraries
 library(CompositeRegressionEstimation)
-#library(pubBonneryChengLahiri2016)
+library(pubBonneryChengLahiri2016)
 library(Hmisc)
 library(plyr)
 library(dataCPS)
@@ -100,7 +100,7 @@ if(!file.exists(file.path(resultsfolder,"Simu_misestimatesbias.rda"))){
   Hmisc::label(misestimatesbias)<-"Rotation group biased month in sample estimate for longitudinal sample i, month m, rotation group mis j, synthetisation procedure s, employment statys y"
   save(misestimatesbias,file=file.path(resultsfolder ,"Simu_misestimatesbias.rda"))
   Misestimates<-abind::abind("false"=misestimates,"true"=misestimatesbias,along=6)
-  names(dimnames(Misestimates))[6]<-"b"
+  names(dimnames(Misestimates))<-c(names(dimnames(misestimates)),"b")
   save(Misestimates,file=file.path(resultsfolder ,"Simu_MMisestimates.rda"))
   rm(misestimates,Misestimates,misestimatesbias);gc()}
 
@@ -189,15 +189,15 @@ if(!file.exists(file.path(resultsfolder,"Simu_AKcomprep.rda"))){
   #compute weights
   AK3_weights<-
     plyr::aaply(coeffAK3,1:2,function(x){
-      CPS_AK_coeff.array.f(dim(misestimates)[match("m",names(dimnames(misestimates)))],x,simplify=FALSE)})
+      CPS_AK_coeff.array.f(dim(Misestimates)[match("m",names(dimnames(Misestimates)))],x,simplify=FALSE)})
   #compute estimates
   AKcomprep<-TensorDB::"%.%"(AK3_weights,Misestimates,
-                             I_A=list(c=c("s"),n=c("c","i2","m2"),p=c( "i1", "mis1", "m1")),
+                             I_A=list(c=c("s"),n=c("c","y2","m2"),p=c( "y1", "mis1", "m1")),
                              I_B=list(c="s",p=c("y","j","m"),q=c("i","b")))
   
-  AKcomprep<-pubBonneryChengLahiri2016::addUtoarray(AKcomprep,"i2")
-  AKcomprep<-adddifftoarray(AKcomprep,"i2","m2")
-  names(dimnames(AKcomprep))[match(c("i2","m2"),names(dimnames(AKcomprep)))]<-c("y","m")
+  AKcomprep<-pubBonneryChengLahiri2016::addUtoarray(AKcomprep,"y2")
+  AKcomprep<-adddifftoarray(AKcomprep,"y2","m2")
+  names(dimnames(AKcomprep))[match(c("y2","m2"),names(dimnames(AKcomprep)))]<-c("y","m")
   save(AKcomprep,file=file.path(resultsfolder ,"Simu_AKcomprep.rda"))
   MSE_AK<-compMSE(AKcomprep,Populationtotals)
   Hmisc::label(MSE_AK)<-"array of MSE of AK estimate of y in synthetic population s and month m  and presence of bias b"
