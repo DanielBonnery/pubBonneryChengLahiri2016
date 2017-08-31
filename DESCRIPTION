@@ -2,7 +2,7 @@ Package: pubBonneryChengLahiri2016
 Type: Package
 Title: X
 Version: 1.0 
-Date: 2017-01-31
+Date: 2017-08-31
 Author: D. Bonnery
 Maintainer: D. Bonnery  <dbonnery@umd.edu>
 Imports: ggplot2,
@@ -17,6 +17,14 @@ Suggests:
 Description: Data
 Remotes: DanielBonnery/CompositeRegressionEstimation,
 	DanielBonnery/TensorDB
+Depends: ggplot2,
+	abind,
+	optimx,
+	Matrix,
+	Hmisc,
+	MASS,
+	filehash,
+	plyr
 License: GPL (>= 2)
 LazyLoad: yes
 LazyData: true

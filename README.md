@@ -98,67 +98,6 @@ knitr::kable(table2.b,caption="Optimal (a_2,k_2) values for the three population
 |2dorder                |( 0.0363 , 0.309 )    |( 0.0355 , 0.2779 )   |( 0.0355 , 0.2877 )   |( 0.4 , 0.7 ) |
 |2dorder-indexdependent |( 0.0534 , 0.5052 )   |( 0.0533 , 0.4788 )   |( 0.0538 , 0.4842 )   |( 0.4 , 0.7 ) |
 
-### 3.2.2. Figure 1
-
-```r
-print(1)
-```
-### 3.2.3. Table 3
-
-```r
-knitr::kable(data.frame(x=1))
-```
-
-
-
-|  x|
-|--:|
-|  1|
-### 3.2.4. Table 4
-
-```r
-knitr::kable(data.frame(x=1))
-```
-
-
-
-|  x|
-|--:|
-|  1|
-### 3.2.4. Table 5
-
-```r
-knitr::kable(data.frame(x=1))
-```
-
-
-
-|  x|
-|--:|
-|  1|
-### 3.2.4. Table 6
-
-```r
-knitr::kable(data.frame(x=1))
-```
-
-
-
-|  x|
-|--:|
-|  1|
-
-### 3.2.4. Table 7
-
-```r
-knitr::kable(data.frame(x=1))
-```
-
-
-
-|  x|
-|--:|
-|  1|
 ## Bonus
 
 ### Table 1
@@ -166,3 +105,4 @@ knitr::kable(data.frame(x=1))
 ```r
 CPSrotationchart()
 ```
+

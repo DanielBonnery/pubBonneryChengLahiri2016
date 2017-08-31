@@ -1,7 +1,7 @@
 #' Adds unemployment rate to an array
 #' 
 #' @param A  a_1 x ... x a_p
-#' @param i an integer or a string indicating the dimention of the array that corresponds to the employed and unemployed
+#' @param dime an integer or a string indicating the dimention of the array that corresponds to the employed and unemployed
 #' @return uenames, a character string indicating the dimension names corresponding to employed,unemployed and rate( will be created)
 #' @examples
 #' A=array(1:(prod(2:5)),2:5);dimnames(A)[[2]]<-c("unemp","emp","nilf");names(dimnames(A))[2]<-"variable";addUtoarray(A,2,c("u"="unemp","e"="emp","r"="r"));addUtoarray(A,"variable",c("u"=1,"e"=2,"r"=4))
@@ -9,7 +9,7 @@
 #' W%.%.%.%t(X);
 
 addUtoarray<-function(A,
-                      dime,
+                      dime="y",
                       uenames=c("u"="0","e"="1","r"="r")){
   indices<-rep(list(T),length(dim(A)))
   names(indices)<-names(dimnames(A))
@@ -27,13 +27,4 @@ A2=abind::abind(A,R,along=dime)
 names(dimnames(A2))<-names(dimnames(A))
 Hmisc::label(A2)<-Hmisc::label(A)
 A2
-}
-
-
-if(FALSE){
-  A=array(rnorm(24),c(3,2,4))
-  Hmisc::label(A)<-"test"
-  dimnames(A)[[2]]<-c("0","1")
-  names(dimnames(A))<-c("month","es","toto")
-  A2<-addUtoarray(A,dime=2)
 }
