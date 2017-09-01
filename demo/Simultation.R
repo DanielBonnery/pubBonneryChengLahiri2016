@@ -120,7 +120,7 @@ if(!file.exists(file.path(resultsfolder,"Simu_Direct.rda"))){
   MSE_Direct<-compMSE(Direct,Populationtotals)
   Hmisc::label(MSE_Direct)<-"array of MSE of Direct estimate of y in synthetic population s and month m  and presence of bias b"
   save(MSE_Direct,file=file.path(resultsfolder ,"Simu_MSE_Direct.rda"))
-  }
+}
 
 #3.3. Computation of the variance covariance matrix of the month in sample estimates
 if(!file.exists(file.path(resultsfolder,"Simu_Sigmas.rda"))){
@@ -148,7 +148,7 @@ if(!file.exists(file.path(resultsfolder,"Simu_Sigmas.rda"))){
 if(!file.exists(file.path(resultsfolder,"Simu_coeffAK3.rda"))){
   load(file.path(resultsfolder,"Simu_Sigmas.rda"))
   load(file.path(resultsfolder,"Simu_Populationtotals.rda"))
-  coeffAK3<-plyr::aaply(1:3,1,function(i){CompositeRegressionEstimation::bestAK3(Sigmas[i,,,,,,],t(Populationtotals[i,,]))},.progress="text")
+  coeffAK3<-plyr::aaply(1:3,1,function(s){CompositeRegressionEstimation::bestAK3(Sigmas[s,,,,,,],t(Populationtotals[s,,]))},.progress="text")
   dimnames(coeffAK3)[1]<-dimnames(Populationtotals)[1]
   names(dimnames(coeffAK3))<-c("s","c")
   Hmisc::label(coeffAK3)<-"matrix M of 6-length vectors, where M[s,c] is the set of ak coefficients (a1, a2, a3, k1, k2, k3) optimum for population s and criterium c"
@@ -291,29 +291,11 @@ if(!file.exists(file.path(resultsfolder,"Simu_MRRcomp.rda"))){
 
 load(file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
 load(file.path(resultsfolder ,"Simu_BB.rda"))
-tablesAf<-function(s,i,m,b,syntheticcpspops,BB){
-                      A=syntheticcpspops[[s]][[m]][samplerule(i,1:800,m),"pumlrR"]
-                      if(b=="true"){
-                        x=sample((701:800)[A[701:800,1]=="1"],BB[d$i,d$m,1,d$s,1])
-                        A[x]<-"0"}
-    model.matrix(~A+0,data.frame(A=A))}
-
-tablesAf(1,1,1,"false",syntheticcpspops,BB)
 
 
 
 
 
-estimatesigma<-function(s,i,m1,m2,b,syntheticcpspops,BB){
-  sigma2<-array(0,c(3,3))
-  if(is.element(abs(m1-m2),c(0,1,2,3,9,10,11,12,13,14,15))){
-    x<-deltalist(m1,m2)
-    y<-cbind(tablesAf(s,i,m1,b,syntheticcpspops,BB),tablesAf(s,i,m2,b,syntheticcpspops,BB))
-    mm<-plyr::aaply(y,2,mean);
-    x<-plyr::aaply(y,1,function(z){z-mm})
-    sigma2<-t(x[,1])%*%x[,2]/(nrow(x)-1)}
-  sigma2}
-estimatesigma(1,1,1,2,"false",syntheticcpspops,BB)
 
 
 
@@ -322,22 +304,41 @@ if(!file.exists(file.path(resultsfolder,"Simu_Sigmahat.rda"))){
   load(file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
   load(file.path(resultsfolder ,"Simu_Sigmas.rda"))
   load(file.path(resultsfolder ,"Simu_BB.rda"))
+  load(file.path(resultsfolder,"Simu_Populationtotals.rda"))
   
-  Sigmahat<-plyr::daply(do.call(expand.grid,
-                                c(i=1:1000,dimnames(Sigmas)[match(c("s","m1","j1","m2","j2"),names(dimnames(Sigmas)))],
-                                  list(stringAsFactors=FALSE))),
-                        
-                        )
   
-  names(dimnames(Sigmahat))<-c("i",names(dimnames(Sigmas)),"b")
-  Hmisc::label(Sigmahat)<-"Estimate of synthetic population s, seed i, month m, variable y, estimator e, bias b"
-  save(MRRcomp,file=file.path(resultsfolder,"Simu_MRRcomp.rda"))
+  allcor<-do.call(expand.grid,
+                  c(lapply(dimnames(Sigmas)[match(c("m1","m2"),names(dimnames(Sigmas)))],strtoi),
+                    list(stringsAsFactors=FALSE)))
+  all_i_s_b<-do.call(expand.grid,list(i=1:1000,s=names(syntheticcpspops),b=c("true","false"),stringsAsFactors=FALSE))
+  Akhat<-plyr::daply(all_i_s_b,
+    ~i+s+b,
+    function(d){
+      Sigmahat=plyr::daply(allcor,~m1+m2,function(d2){
+        estimatesigma(d$s,d$i,d2$m1,d2$m2,d$b,syntheticcpspops,BB)
+      })
+      names(dimnames(Sigmahat))[3:4]<-c("y1","y2")
+      coeffAK3hat<-CompositeRegressionEstimation::bestAK3(Sigmahats[i,,,,,,],t(Populationtotals[i,,]))},.progress="text")
+      dimnames(coeffAK3)[1]<-dimnames(Populationtotals)[1]
+      names(dimnames(coeffAK3))<-c("s","c")
+      Hmisc::label(coeffAK3)<-"matrix M of 6-length vectors, where M[s,c] is the set of ak coefficients (a1, a2, a3, k1, k2, k3) optimum for population s and criterium c"
+      coeffAK3<-cbind(coeffAK3, CPSmethod=rep(list(numeric(6)),3))
+      coeffAK3[[1,4]]<-coeffAK3[[2,4]]<-coeffAK3[[3,4]]<-CPS_AK()
+      save(coeffAK3,file=file.path(resultsfolder ,"Simu_coeffAK3.rda"))
+      rm(coeffAK3s,Sigmas);gc()
+  }
   
-  MSE_MR<-compMSE(MRRcomp,Populationtotals)
-  Hmisc::label(MSE_MR)<-"array of MSE of MR estimate of y in synthetic population s and month m  and presence of bias b"
-  save(MSE_MR,file=file.path(resultsfolder ,"Simu_MSE_MR.rda"))
-  
-  rm(MSE_MR,MRRcompbias,MRRcompb0MRRcomp,MRRcomp);gc()
+  )
+
+names(dimnames(Sigmahat))<-c("i",names(dimnames(Sigmas)),"b")
+Hmisc::label(Sigmahat)<-"Estimate of synthetic population s, seed i, month m, variable y, estimator e, bias b"
+save(MRRcomp,file=file.path(resultsfolder,"Simu_MRRcomp.rda"))
+
+MSE_MR<-compMSE(MRRcomp,Populationtotals)
+Hmisc::label(MSE_MR)<-"array of MSE of MR estimate of y in synthetic population s and month m  and presence of bias b"
+save(MSE_MR,file=file.path(resultsfolder ,"Simu_MSE_MR.rda"))
+
+rm(MSE_MR,MRRcompbias,MRRcompb0MRRcomp,MRRcomp);gc()
 }
 
 
@@ -391,7 +392,7 @@ save(MSE_BestAK,file=file.path(resultsfolder ,"Simu_MSE_BestAK.rda"))
 
 
 
-    
+
 
 
 ###############################################3
