@@ -9,7 +9,7 @@ tablesAf<-function(s,i,m,b,syntheticcpspops,BB){
   colnames(A)<-gsub("A","",colnames(A))
   A}
 
-tablesAf(1,1,1,"false",syntheticcpspops,BB)
+#' tablesAf(1,1,1,"false",syntheticcpspops,BB)
 
 
 

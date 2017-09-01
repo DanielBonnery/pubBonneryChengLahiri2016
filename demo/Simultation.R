@@ -318,6 +318,7 @@ if(!file.exists(file.path(resultsfolder,"Simu_Sigmahat.rda"))){
         estimatesigma(d$s,d$i,d2$m1,d2$m2,d$b,syntheticcpspops,BB)
       })
       names(dimnames(Sigmahat))[3:4]<-c("y1","y2")
+      
       coeffAK3hat<-CompositeRegressionEstimation::bestAK3(Sigmahats[i,,,,,,],t(Populationtotals[i,,]))},.progress="text")
       dimnames(coeffAK3)[1]<-dimnames(Populationtotals)[1]
       names(dimnames(coeffAK3))<-c("s","c")
