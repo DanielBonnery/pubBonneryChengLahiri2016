@@ -12,6 +12,7 @@ library(dataCPS)
 library(abind)
 library(reshape2)
 library(ggplot2)
+library(slam)
 #library(doParallel)
 #2. Create synthetic populations
 #2.0. Estimate counts from CPS web data.
@@ -102,6 +103,8 @@ if(!file.exists(file.path(resultsfolder,"Simu_misestimatesbias.rda"))){
   Misestimates<-abind::abind("false"=misestimates,"true"=misestimatesbias,along=6)
   names(dimnames(Misestimates))<-c(names(dimnames(misestimates)),"b")
   save(Misestimates,file=file.path(resultsfolder ,"Simu_MMisestimates.rda"))
+  BB<-(misestimatesbias-misestimates)/1000
+  save(BB,file=file.path(resultsfolder ,"Simu_BB.rda"))
   rm(misestimates,Misestimates,misestimatesbias);gc()}
 
 #3.2. Computation of direct estimator
@@ -207,6 +210,16 @@ if(!file.exists(file.path(resultsfolder,"Simu_AKcomprep.rda"))){
 }
 
 
+
+
+
+
+
+
+
+
+
+
 #3.9.  Computation of Regression Composite
 if(!file.exists(file.path(resultsfolder,"Simu_MRRcompb0.rda"))){
   load(file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
@@ -237,9 +250,7 @@ if(!file.exists(file.path(resultsfolder,"Simu_MRRcompbias.rda"))){
   popnums<-names(syntheticcpspops)
   hrmis=as.factor(rep(8:1,each=100))
   un=rep(1,800)
-  load(file.path(resultsfolder,"Simu_misestimates.rda"))
-  load(file.path(resultsfolder,"Simu_misestimatesbias.rda"))
-  BB<-(misestimatesbias-misestimates)/1000
+  load(file.path(resultsfolder,"Simu_BB.rda"))
   
   
   MRRcompbias<-plyr::aaply(popnums,1,function(popnum){
@@ -260,10 +271,7 @@ if(!file.exists(file.path(resultsfolder,"Simu_MRRcompbias.rda"))){
   names(dimnames(MRRcompbias))[1:2]<-c("population","seed")
   MRRcompbias<-addUtoarray(MRRcompbias,4,uenames=c(u="pumlrR_n0",e="pumlrR_n1","r"="r"))
   save(MRRcompbias,file=file.path(resultsfolder,"Simu_MRRcompbias.rda"))
-  
   rm(MRRcompbias,syntheticcpspops);gc()}
-
-
 
 if(!file.exists(file.path(resultsfolder,"Simu_MRRcomp.rda"))){
   load(file.path(resultsfolder ,"Simu_MRRcompb0.rda"))
@@ -280,6 +288,59 @@ if(!file.exists(file.path(resultsfolder,"Simu_MRRcomp.rda"))){
   
   rm(MSE_MR,MRRcompbias,MRRcompb0MRRcomp,MRRcomp);gc()
 }
+
+load(file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
+load(file.path(resultsfolder ,"Simu_BB.rda"))
+tablesAf<-function(s,i,m,b,syntheticcpspops,BB){
+                      A=syntheticcpspops[[s]][[m]][samplerule(i,1:800,m),"pumlrR"]
+                      if(b=="true"){
+                        x=sample((701:800)[A[701:800,1]=="1"],BB[d$i,d$m,1,d$s,1])
+                        A[x]<-"0"}
+    model.matrix(~A+0,data.frame(A=A))}
+
+tablesAf(1,1,1,"false",syntheticcpspops,BB)
+
+
+
+
+
+estimatesigma<-function(s,i,m1,m2,b,syntheticcpspops,BB){
+  sigma2<-array(0,c(3,3))
+  if(is.element(abs(m1-m2),c(0,1,2,3,9,10,11,12,13,14,15))){
+    x<-deltalist(m1,m2)
+    y<-cbind(tablesAf(s,i,m1,b,syntheticcpspops,BB),tablesAf(s,i,m2,b,syntheticcpspops,BB))
+    mm<-plyr::aaply(y,2,mean);
+    x<-plyr::aaply(y,1,function(z){z-mm})
+    sigma2<-t(x[,1])%*%x[,2]/(nrow(x)-1)}
+  sigma2}
+estimatesigma(1,1,1,2,"false",syntheticcpspops,BB)
+
+
+
+#3.9.  Estimate Sigma
+if(!file.exists(file.path(resultsfolder,"Simu_Sigmahat.rda"))){
+  load(file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
+  load(file.path(resultsfolder ,"Simu_Sigmas.rda"))
+  load(file.path(resultsfolder ,"Simu_BB.rda"))
+  
+  Sigmahat<-plyr::daply(do.call(expand.grid,
+                                c(i=1:1000,dimnames(Sigmas)[match(c("s","m1","j1","m2","j2"),names(dimnames(Sigmas)))],
+                                  list(stringAsFactors=FALSE))),
+                        
+                        )
+  
+  names(dimnames(Sigmahat))<-c("i",names(dimnames(Sigmas)),"b")
+  Hmisc::label(Sigmahat)<-"Estimate of synthetic population s, seed i, month m, variable y, estimator e, bias b"
+  save(MRRcomp,file=file.path(resultsfolder,"Simu_MRRcomp.rda"))
+  
+  MSE_MR<-compMSE(MRRcomp,Populationtotals)
+  Hmisc::label(MSE_MR)<-"array of MSE of MR estimate of y in synthetic population s and month m  and presence of bias b"
+  save(MSE_MR,file=file.path(resultsfolder ,"Simu_MSE_MR.rda"))
+  
+  rm(MSE_MR,MRRcompbias,MRRcompb0MRRcomp,MRRcomp);gc()
+}
+
+
 
 #4. Compute best alpha.
 load(file.path(resultsfolder ,"Simu_MSE_MR.rda"))
@@ -359,12 +420,7 @@ names(graphdata)<-c(names(dimnames(relMSE_Direct)),"e","value")
 graphdata$m<-as.Date(paste0(graphdata$m,"01"), format="%Y%m%d")
 figure1<-ggplot(graphdata[graphdata$b=="false",],aes(x=m,y=value,colour=e))+geom_line() + 
   facet_grid(s~y )+ylab("")+scale_y_log10()
-
-
-
 # Table 4
-Quantiles and mean of the relative mean squared errors for different population
-and unemployment level estimators
 
 # Table 5
 

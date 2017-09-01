@@ -22,4 +22,3 @@ Returns the jth selected person in month m when the random number drawn is i.
 \examples{
 samplerule(1,1:160,1)
 }
-

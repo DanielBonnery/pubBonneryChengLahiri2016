@@ -22,4 +22,3 @@ MSEA=array(1:(prod(2:6)),2:6);dimnames(MSEA)<-list(s=1:2,m=1:3,y=c("1","0","_1",
 MSEAref=array(1:(prod(3:4)),3:4);dimnames(MSEAref)=dimnames(MSEA)[2:3];
 relMSE(MSEA,MSEAref)
 }
-

@@ -22,4 +22,3 @@ A=array(1:(prod(2:5)),2:5);dimnames(A)[[2]]<-c("unemp","emp","nilf");names(dimna
 X=array(1:(prod(4:6)),4:6); "\%.\%"(W,X,j=2);
 W\%.\%.\%.\%t(X);
 }
-

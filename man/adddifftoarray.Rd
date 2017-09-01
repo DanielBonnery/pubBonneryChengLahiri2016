@@ -21,4 +21,3 @@ Adds unemployment rate to an array
 A=array(1:(prod(2:6)),2:6);dimnames(A)<-list(s=1:2,m=1:3,y=c("1","0","_1","r"),e=1:5,i=1:6);
 adddifftoarray(A)
 }
-
