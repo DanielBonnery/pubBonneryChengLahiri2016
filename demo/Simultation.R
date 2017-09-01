@@ -311,24 +311,29 @@ if(!file.exists(file.path(resultsfolder,"Simu_Sigmahat.rda"))){
                   c(lapply(dimnames(Sigmas)[match(c("m1","m2"),names(dimnames(Sigmas)))],strtoi),
                     list(stringsAsFactors=FALSE)))
   all_i_s_b<-do.call(expand.grid,list(i=1:1000,s=names(syntheticcpspops),b=c("true","false"),stringsAsFactors=FALSE))
-  Akhat<-plyr::daply(all_i_s_b,
-    ~i+s+b,
-    function(d){
-      Sigmahat=plyr::daply(allcor,~m1+m2,function(d2){
-        estimatesigma(d$s,d$i,d2$m1,d2$m2,d$b,syntheticcpspops,BB)
-      })
-      SigmahatH=Sigmahatf(Sigmahat)
-      coeffAK3hat<-CompositeRegressionEstimation::bestAK3(SigmahatH,t(Populationtotals[d$s,,]))
-      names(dimnames(coeffAK3))<-c("s","c")
-      Hmisc::label(coeffAK3)<-"matrix M of 6-length vectors, where M[s,c] is the set of ak coefficients (a1, a2, a3, k1, k2, k3) optimum for population s and criterium c"
-      coeffAK3<-cbind(coeffAK3, CPSmethod=rep(list(numeric(6)),3))
-      coeffAK3[[1,4]]<-coeffAK3[[2,4]]<-coeffAK3[[3,4]]<-CPS_AK()
-      save(coeffAK3,file=file.path(resultsfolder ,"Simu_coeffAK3.rda"))
-      rm(coeffAK3s,Sigmas);gc()
-  }
+  Ak3weightshat<-plyr::daply(all_i_s_b,
+                             ~i+s+b,
+                             function(d){
+                               Sigmahat=plyr::daply(allcor,~m1+m2,function(d2){
+                                 estimatesigma(d$s,d$i,d2$m1,d2$m2,d$b,syntheticcpspops,BB)
+                               })
+                               SigmahatH=Sigmahatf(Sigmahat)
+                               coeffAK3hat<-CompositeRegressionEstimation::bestAK3(SigmahatH,t(Populationtotals[d$s,,]))
+                               load(file.path(resultsfolder ,"Simu_MMisestimates.rda"))
+                               load(file.path(resultsfolder ,"Simu_coeffAK3.rda"))
+                               #compute weights
+                               AK3_weights<-plyr::laply(coeffAK3hat,function(x){CPS_AK_coeff.array.f(85,x)})})
+  #compute estimates
+  AKcomprep<-TensorDB::"%.%"(Ak3weightshat,Misestimates,
+                             I_A=list(c=c("s"),n=c("c","y2","m2"),p=c( "y1", "h1", "m1")),
+                             I_B=list(c="s",p=c("y","j","m"),q=c("i","b")))
   
-  )
-
+  names(dimnames(AKcomprep))[match(c("y2","m2"),names(dimnames(AKcomprep)))]<-c("y","m")
+  AKcomprep<-pubBonneryChengLahiri2016::addUtoarray(AKcomprep)
+  AKcomprep<-adddifftoarray(AKcomprep)
+  names(dimnames(coeffAK3))<-c("s","c")
+}
+  
 names(dimnames(Sigmahat))<-c("i",names(dimnames(Sigmas)),"b")
 Hmisc::label(Sigmahat)<-"Estimate of synthetic population s, seed i, month m, variable y, estimator e, bias b"
 save(MRRcomp,file=file.path(resultsfolder,"Simu_MRRcomp.rda"))
@@ -424,15 +429,15 @@ figure1<-ggplot(graphdata[graphdata$b=="false",],aes(x=m,y=value,colour=e))+geom
 
 # Table 5
 
-Same with measurement error
+#Same with measurement error
 
 #Table 6 
-Dispersion and mean of the relative mean squared errors for different population
-and unemployment level estimators
+#Dispersion and mean of the relative mean squared errors for different population
+#and unemployment level estimators
 
 #Table 7
-Dispersion and mean of the relative mean squared errors for different population
-and unemployment change estimators
+#Dispersion and mean of the relative mean squared errors for different population
+#and unemployment change estimators
 
 
 save(figure1,table2.a,table2.b,table3,file=file.path(resultsfolder ,"Simu_alltablesandfigures.rda"))

@@ -48,7 +48,7 @@ estimatesigma<-function(s,i,m1,m2,b,syntheticcpspops,BB){
     mm<-plyr::aaply(y,2:3,mean);
     x<-plyr::aaply(y,1,function(z){z-mm})
     sigma2<-t(x[,,1])%*%x[,,2]/(dim(x)[3]-1)}
-  dimnames(sigma2)<-list("y1"=dimnames(y)[[2]],"y2"=dimnames(y)[[2]])
+  dimnames(sigma2)<-list("y1"=c("0"  ,"1",  "_1"),"y2"=c("0"  ,"1",  "_1"))
   sigma2}
 
 
@@ -77,15 +77,13 @@ multsigmaAf<-function(m1,m2,n=100,N=100000){
 }
 
 Sigmahatf<-function(Sigmahat){
-  SigmahatH<-plyr::daply(do.call(expand.grid,dimnames(Sigmahat)[match(c("m1","y1","m2","y2"),names(dimnames(Sigmahat)))]),~m1+m2,
-                         function(d){
-               multsigmaA<-multsigmaAf(d$m1,d$m2)
+  SigmahatH<-plyr::daply(do.call(expand.grid,c(lapply(dimnames(Sigmahat)[match(c("m1","m2"),names(dimnames(Sigmahat)))],strtoi),list(stringsAsFactors=FALSE))),~m1+m2,
+                         function(dd){
+               multsigmaA<-multsigmaAf(dd$m1,dd$m2)
                dimnames(multsigmaA)<-list(h1=1:8,h2=1:8)
-               outer(multsigmaA,Sigmahat[d$m1,d$m2,,],"*")
+               outer(multsigmaA,Sigmahat[dd$m1,dd$m2,,],"*")
              })
-  dimnames(SigmahatH)<-c(dimnames(Sigmahat)[match(c("m1","y1","m2","y2"),names(dimnames(Sigmahat)))],
-                         list(h1=1:8,h2=1:8))[c(1:2,5,3:4,6)]
-  SigmahatH}
+  aperm(SigmahatH,match(c("m1","h1","y1","m2","h2","y2"),names(dimnames(SigmahatH))))}
 
 if(FALSE){
   charge("Sigma1")
