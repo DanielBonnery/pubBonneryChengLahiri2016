@@ -82,7 +82,8 @@ Sigmahatf<-function(Sigmahat){
                dimnames(multsigmaA)<-list(h1=1:8,h2=1:8)
                outer(multsigmaA,Sigmahat[d$m1,d$m2,,],"*")
              })
-  dimnames(SigmahatH)<-c(dimnames(Sigmahat)[match(c("m1","y1","m2","y2"),names(dimnames(Sigmahat)))]),list(h1=1:8,h2=1:8))[c(1:2,5,3:4,6)]
+  dimnames(SigmahatH)<-c(dimnames(Sigmahat)[match(c("m1","y1","m2","y2"),names(dimnames(Sigmahat)))],
+                         list(h1=1:8,h2=1:8))[c(1:2,5,3:4,6)]
   SigmahatH}
 
 if(FALSE){
