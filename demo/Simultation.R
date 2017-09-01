@@ -317,10 +317,8 @@ if(!file.exists(file.path(resultsfolder,"Simu_Sigmahat.rda"))){
       Sigmahat=plyr::daply(allcor,~m1+m2,function(d2){
         estimatesigma(d$s,d$i,d2$m1,d2$m2,d$b,syntheticcpspops,BB)
       })
-      names(dimnames(Sigmahat))[3:4]<-c("y1","y2")
-      
-      coeffAK3hat<-CompositeRegressionEstimation::bestAK3(Sigmahats[i,,,,,,],t(Populationtotals[i,,]))},.progress="text")
-      dimnames(coeffAK3)[1]<-dimnames(Populationtotals)[1]
+      SigmahatH=SigmahatHf
+      coeffAK3hat<-CompositeRegressionEstimation::bestAK3(SigmahatH[,,,,,],t(Populationtotals[d$s,,]))
       names(dimnames(coeffAK3))<-c("s","c")
       Hmisc::label(coeffAK3)<-"matrix M of 6-length vectors, where M[s,c] is the set of ak coefficients (a1, a2, a3, k1, k2, k3) optimum for population s and criterium c"
       coeffAK3<-cbind(coeffAK3, CPSmethod=rep(list(numeric(6)),3))

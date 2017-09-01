@@ -48,6 +48,7 @@ estimatesigma<-function(s,i,m1,m2,b,syntheticcpspops,BB){
     mm<-plyr::aaply(y,2:3,mean);
     x<-plyr::aaply(y,1,function(z){z-mm})
     sigma2<-t(x[,,1])%*%x[,,2]/(dim(x)[3]-1)}
+  dimnames(sigma2)<-list("y1"=dimnames(y)[[2]],"y2"=dimnames(y)[[2]])
   sigma2}
 
 
