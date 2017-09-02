@@ -1,0 +1,120 @@
+
+R version 3.4.1 (2017-06-30) -- "Single Candle"
+Copyright (C) 2017 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #note that this program takes time. If you plan to shut down your computer before it ends. All results will be stored in this folder, and results alreadu stored will not be re-computed.
+> resultsfolder<-if(file.exists("~/R/Data/CPS")){"~/R/Data/CPS"}else{
++   if(is.element("tcltk",installed.packages())){library(tcltk)
++     tk_choose.dir(default = "", caption = "Please select a directory where to store results.")}else{getwd()}}
+> 
+> #1. Load libraries
+> library(CompositeRegressionEstimation)
+> library(pubBonneryChengLahiri2016)
+Loading required package: ggplot2
+Loading required package: abind
+Loading required package: optimx
+Loading required package: Matrix
+Loading required package: Hmisc
+Loading required package: lattice
+Loading required package: survival
+Loading required package: Formula
+
+Attaching package: ‘Hmisc’
+
+The following objects are masked from ‘package:base’:
+
+    format.pval, round.POSIXt, trunc.POSIXt, units
+
+Loading required package: MASS
+Loading required package: filehash
+filehash: Simple Key-Value Database (2.4-1)
+Loading required package: plyr
+
+Attaching package: ‘plyr’
+
+The following objects are masked from ‘package:Hmisc’:
+
+    is.discrete, summarize
+
+> library(Hmisc)
+> library(plyr)
+> library(dataCPS)
+> library(abind)
+> library(reshape2)
+> library(ggplot2)
+> library(slam)
+> #library(doParallel)
+> #2. Create synthetic populations
+> #2.0. Estimate counts from CPS web data.
+> 
+> if(!file.exists(file.path(resultsfolder,"Simu_list.tablesweb.rda"))){
++   allmonths <- format(seq(as.Date("20050101", "%Y%m%d"),
++                           as.Date("20120101", "%Y%m%d"),
++                           by="month"), "%Y%m")
++   names(allmonths)<-allmonths
++   list.tablesweb<-plyr::alply(allmonths,1,function(x){
++     eval(parse(text=paste0("data(cps",x,")")))
++     y<-get(paste0("cps",x))
++     y$pemlrR<-rep(c("1","0","_1"),c(2,2,4))[factor(y$pemlr,levels=c(1:7,"-1"))]
++     y[	y$hrintsta=="1" & y$prpertyp %in% c("1","2"), ]
++     y$employed=y$pemlrR=="1";y$unemployed=y$pemlrR=="0";
++     y[,c("hrhhid","peage","pesex","pulineno","pehspnon","pemlr","pwsswgt","pwcmpwgt","pemlrR","hrmis","employed","unemployed")]
++   },.progress = "text")
++   rm(list=grep("cps",ls(),value=TRUE))
++   names(list.tablesweb)<-allmonths
++   save(list.tablesweb,file=file.path(resultsfolder,"Simu_list.tablesweb.rda"))
++ }
+> #2.1. Compute count estimates from CPS web data by employment status and month
+> if(!file.exists(file.path(resultsfolder,"Simu_Totals.rda"))){
++   load(file.path(resultsfolder,"Simu_list.tablesweb.rda"))
++   Totals<-CompositeRegressionEstimation::WS(list.tablesweb,weight ="pwsswgt" ,list.y = "pemlrR")
++   dimnames(Totals)[[2]]<-substr(dimnames(Totals)[[2]],9,10)
++   names(dimnames(Totals))<-c("m","y")
++   Hmisc::label(Totals)<-"value of variable 'y' ('0':unemployed, '1', employed, '_1', NILF) in month m" 
++   save(Totals,file=file.path(resultsfolder,"Simu_Totals.rda"))
++   rm(list.tablesweb);gc()}
+> #2.2. Compute count estimates from CPS web data by month, employment status of the month, employment status of the previous month
+> if(!file.exists(file.path(resultsfolder,"Simu_crossTotals.rda"))){
++   load(file.path(resultsfolder,"Simu_list.tablesweb.rda"))
++   crossTotals<-CompositeRegressionEstimation::douuble (list.tablesweb,
++                                                        w="pwsswgt",
++                                                        id=c("hrhhid","pulineno"),y="pemlrR")$N01
++   save(crossTotals,file=file.path(resultsfolder,"Simu_crossTotals.rda"))
++   rm(list.tablesweb,crossTotals);gc()}
+> #2.3. Create 3 synthetic populations.
+> if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspops.rda"))){
++   load(file.path(resultsfolder,"Simu_crossTotals.rda"))
++   load(file.path(resultsfolder,"Simu_Totals.rda"))
++   syntheticcpspops<-syntheticcpsdataset(Totals,crossTotals)
++   syntheticcpspopsb<-syntheticcpspopsbf(syntheticcpspops)
++   save(syntheticcpspops,syntheticcpspopsb,file=file.path(resultsfolder ,"Simu_syntheticcpspops.rda"))
++   rm(Totals,crossTotals,syntheticcpspops,syntheticcpspopsb);gc()}
+> 
+> #2.3.2. Store employment status as array
+> if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspopsA.rda"))){
++   load(file.path(resultsfolder,"Simu_syntheticcpspops.rda"))
++   syntheticcpspopsA<-
++     plyr::laply(list(syntheticcpspops,syntheticcpspopsb),
++                 function(pops){
++                   plyr::laply(pops,
++                               function(pop){
++                                 plyr::laply(pop,
++                                             function(l){
++                                               model.matrix(~0+pumlrR,l)})})})
++   
++ }

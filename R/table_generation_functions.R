@@ -9,18 +9,23 @@
 samplerule<-function(i,j,m){((5*(m-1)+
                                 5*(i-1)+
                                 5000*((j-1)%/%5)+((j-1)%%5)+5*((j-1)%/%100)+40*((j-1)%/%400)))%%100000+1}
-
-sampleruleS<-function(i){samplerule(i,1:100,1)}
+#' Return atomic rotation group 1 for seed i (1000 possible values)
+#'
+#' @param i An integer between 1 and 1000
+#' @return The atomic rotation group 1 for seed i 
+#' @examples
+#' sampleruleS(1,1:160,1)
+#' identical(sampleruleS(i),samplerule(i,1:100,1))
+#' identical((function(i,m){c(sapply((m+i-2)+c(1:4,13:16),sampleruleS))})(1,1),samplerule(1,1:800,1))
 sampleruleS<-function(i){((5*(i-1)+5000*((0:99)%/%5)+((0:99)%%5)+5*((0:99)%/%100)))%%100000+1}
-samplerule2<-function(i,m){c(sapply((m+i-2)+c(1:4,13:16),sampleruleS))}
-#' identical(samplerule2(1,1),samplerule(1,1:800,1))
+
 sampleruleH<-function(i,j,m){(((m-1)+
                                 (i-1)+
                                 1000*((j-1))+((j-1)%/%20)+8*((j-1)%/%80)))%%20000+1}
 
-misH<-function(i,m,misi,syntheticcpspopsHA){apply(syntheticcpspopsHA[,sampleruleH(i,(8-misi)*20+(1:20),m),,m],c(1,3),sum)}
-
-mis<-function(i,m,misi,syntheticcpspopsA){apply(syntheticcpspopsA[,samplerule(i,(8-misi)*100+(1:100),m),,m],c(1,3),sum)}
+misH<-function(i,m,misi,syntheticcpspopsHA){plyr::aaply(syntheticcpspopsHA[,sampleruleH(i,(8-misi)*20+(1:20),m),,m],c(1,3),sum)}
+mis<-function(i,m,misi,syntheticcpspopsA){plyr::aaply(syntheticcpspopsA[,samplerule(i,(8-misi)*100+(1:100),m),,m],c(1,3),sum)}
+misS<-function(i,m,misi,syntheticcpspopsS){plyr::aaply(syntheticcpspopsA[,samplerule(i,(8-misi)*100+(1:100),m),,m],c(1,3),sum)}
 
 
 #system.time(misestimates<-plyr::maply(expand.grid(i=1:3,m=1:85,misi=1:8),mis,syntheticcpspopsA=syntheticcpspopsA,.parallel=TRUE))

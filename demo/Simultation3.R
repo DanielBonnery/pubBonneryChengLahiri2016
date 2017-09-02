@@ -12,6 +12,7 @@ library(dataCPS)
 library(abind)
 library(reshape2)
 library(ggplot2)
+library(slam)
 #library(doParallel)
 #2. Create synthetic populations
 #2.0. Estimate counts from CPS web data.
@@ -63,103 +64,98 @@ if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspops.rda"))){
 if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspopsA.rda"))){
   load(file.path(resultsfolder,"Simu_syntheticcpspops.rda"))
   syntheticcpspopsA<-
-    plyr::laply(syntheticcpspops,
-                function(pop){
-                  plyr::laply(pop,
-                              function(l){
-                                model.matrix(~0+pumlrR,l)==1})})
-  rm(syntheticcpspops);gc()
-  syntheticcpspopsbA<-
-    plyr::laply(syntheticcpspopsb,
-                function(pop){
-                  plyr::laply(pop,
-                              function(l){
-                                model.matrix(~0+pumlrR,l)==1})})
-  rm(syntheticcpspopsb);gc()
-  syntheticcpspopsA<-abind(syntheticcpspopsA,syntheticcpspopsbA,along=5)
-  dimnames(syntheticcpspopsA)<-c(list(
-    s=c("Independent","2dorder","2dorder-indexdependent"),
-    m=1:85,
-    k=NULL,
-    y=c("0","1","_1"),
-    b=c("false","true")
-  ))
-  save(syntheticcpspopsA,file=file.path(resultsfolder,"Simu_syntheticcpspopsA.rda"))
-  rm(syntheticcpspopsA,syntheticcpspopsbA);gc()
-  }
+    plyr::laply(list(syntheticcpspops,syntheticcpspopsb),
+                function(pops){
+                  plyr::laply(pops,
+                              function(pop){
+                                plyr::laply(pop,
+                                            function(l){
+                                              model.matrix(~0+pumlrR,l)})})})
+  
+}
 
 
+#2.4. Aggregation of employment status by atomic sample and save in an array
+if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspopsS.rda"))){
+  load(file.path(resultsfolder,"Simu_syntheticcpspops.rda"))
+  plyr::laply(do.call1:1000,1:85)
+  syntheticcpspopsHA<-plyr::laply(syntheticcpspops,syntheticccpspopHAf,.progress="text")
+  names(dimnames(syntheticcpspopsHA))[1]<-c("s")
+  dimnames(syntheticcpspopsHA)[1]<-list(names(syntheticcpspops))
+  Hmisc::label(syntheticcpspopsHA)<-"Total for household h, synthetisation method z, employment status y, and month m"
+  save(syntheticcpspopsHA,file=file.path(resultsfolder,"Simu_syntheticcpspopsHA.rda"))
+  rm(syntheticcpspops,syntheticcpspopsHA);gc()}
 #2.5. Computation of (true) population totals
 if(!file.exists(file.path(resultsfolder,"Simu_Populationtotals.rda"))){
-  load(file.path(resultsfolder,"Simu_syntheticcpspopsA.rda"))
-  Populationtotals<-plyr::aaply(syntheticcpspopsA[,,,,1],c(1:2,4),sum,.progress="text")#.parallel=TRUE)
+  load(file.path(resultsfolder,"Simu_syntheticcpspopsHA.rda"))
+  Populationtotals<-plyr::aaply(syntheticcpspopsHA,c(1,3:4),sum,.progress="text")#.parallel=TRUE)
   Populationtotals<-addUtoarray(Populationtotals)
   Populationtotals<-adddifftoarray(Populationtotals)
   Hmisc::label(Populationtotals)<-"Population value for synthetisation method s, variable y ('1' total employed '0' total unemployed '_1' total NILF 'r' unemployment rate, diff: month to month difference), and month m"
   save(Populationtotals,file=file.path(resultsfolder ,"Simu_Populationtotals.rda"))
   rm(syntheticcpspopsHA);gc()}
 
-
 #3. Estimation
 
-#2.4. Aggregation of employment status by atomic sample and save in an array
-if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspopsS.rda"))){
-  load(file.path(resultsfolder,"Simu_syntheticcpspopsA.rda"))
-  syntheticcpspopsS<-plyr::daply(data.frame(i=1:1000),~i,
-                                 function(d){
-                                   plyr::aaply(syntheticcpspopsA[,,sampleruleS(d$i),,],c(1:2,4:5),sum)},.progress="text")
-  Hmisc::label(syntheticcpspopsS)<-"Total for atomic sample i, synthetisation method s, employment status y, and month m"
-  save(syntheticcpspopsS,file=file.path(resultsfolder,"Simu_syntheticcpspopsS.rda"))
-  rm(syntheticcpspopsA,syntheticcpspopsS);gc()}
-
-
-
+load(file.path(resultsfolder ,"Simu_Populationtotals.rda"))
 #3.1. Compute all month in sample estimates
 if(!file.exists(file.path(resultsfolder,"Simu_misestimates.rda"))){
-  load(file.path(resultsfolder ,"Simu_syntheticcpspopsS.rda"))
-  misestimates<-1000*plyr::daply(expand.grid(i=1:1000,m=1:85,h=1:8,stringsAsFactors = FALSE),
-                                 ~i+m+h,
-                                 function(d){
-                                   syntheticcpspopsS[(d$m-1)+c(16:13,4:1)[d$h],,d$m,,c(1,1+(d$h==8))]},.progress="text")
-  dimnames(misestimates)[[6]][2]<-"true"
-  Hmisc::label(misestimates)<-"Month in sample estimate for longitudinal sample i, month m, rotation group mis h, synthetisation procedure s, employment statys y"
+  load(file.path(resultsfolder ,"Simu_syntheticcpspopsHA.rda"))
+  misestimates<-1000*plyr::maply(expand.grid(i=1:1000,m=1:85,misi=1:8),misH,syntheticcpspopsHA=syntheticcpspopsHA,.progress="text")#.parallel=TRUE)
+  dimnames(misestimates)[[2]]<-dimnames(syntheticcpspopsHA)[[4]]
+  names(dimnames(misestimates))<-c("i","m","j","s","y")
+  Hmisc::label(misestimates)<-"Month in sample estimate for longitudinal sample i, month m, rotation group mis j, synthetisation procedure s, employment statys y"
   save(misestimates,file=file.path(resultsfolder ,"Simu_misestimates.rda"))
-  rm(misestimates,syntheticcpspopsS);gc()}
+  rm(misestimates,syntheticcpspopsHA);gc()}
+
+if(!file.exists(file.path(resultsfolder,"Simu_misestimatesbias.rda"))){
+  set.seed(1)
+  load(file.path(resultsfolder,"Simu_misestimates.rda"))
+  misestimatesbias<-misestimates
+  misestimatesbias[,,1,,]<-1000*plyr::aaply(misestimates[,,1,,]/1000,1:3,
+                                            function(x){if(x[2]>0){matrix(x+rbinom(1,x[2],.2)*c(1,-1,0))}else{x}},.progress = "text")
+  Hmisc::label(misestimatesbias)<-"Rotation group biased month in sample estimate for longitudinal sample i, month m, rotation group mis j, synthetisation procedure s, employment statys y"
+  save(misestimatesbias,file=file.path(resultsfolder ,"Simu_misestimatesbias.rda"))
+  Misestimates<-abind::abind("false"=misestimates,"true"=misestimatesbias,along=6)
+  names(dimnames(Misestimates))<-c(names(dimnames(misestimates)),"b")
+  save(Misestimates,file=file.path(resultsfolder ,"Simu_MMisestimates.rda"))
+  BB<-(misestimatesbias-misestimates)/1000
+  save(BB,file=file.path(resultsfolder ,"Simu_BB.rda"))
+  rm(misestimates,Misestimates,misestimatesbias);gc()}
 
 #3.2. Computation of direct estimator
 if(!file.exists(file.path(resultsfolder,"Simu_Direct.rda"))){
-  load(file.path(resultsfolder ,"Simu_misestimates.rda"))
-  Direct<-plyr::aaply(misestimates,
-                      match(c("i","m","s","y","b"),names(dimnames(misestimates))),
-                      sum,.progress="text")
+  load(file.path(resultsfolder ,"Simu_MMisestimates.rda"))
+  Direct<-plyr::aaply(Misestimates,c(1:2,4:6),sum,.progress="text")
+  names(dimnames(Direct))<-c("i","m","s","y","b")
   Hmisc::label(Direct)<-"Direct estimate for month m, variable y, synthetic population s, seed i, presence of bias b"
   Direct<-addUtoarray(Direct)
   Direct<-adddifftoarray(Direct)
   save(Direct,file=file.path(resultsfolder ,"Simu_Direct.rda"))
-  rm(misestimates);gc()
+  rm(Misestimates,Direct);gc()
   MSE_Direct<-compMSE(Direct,Populationtotals)
   Hmisc::label(MSE_Direct)<-"array of MSE of Direct estimate of y in synthetic population s and month m  and presence of bias b"
   save(MSE_Direct,file=file.path(resultsfolder ,"Simu_MSE_Direct.rda"))
-  rm(MSE_Direct,Direct);gc()
 }
 
 #3.3. Computation of the variance covariance matrix of the month in sample estimates
 if(!file.exists(file.path(resultsfolder,"Simu_Sigmas.rda"))){
   load(file.path(resultsfolder ,"Simu_misestimates.rda"))
-  Sigmas<-varA(misestimates,fixindex = c("s","b"),
-               varyingindex = "i",
-               variableindex = c("m","h","y"))
-  Hmisc::label(Sigmas)<-"array: for population s, covariance between months in sample estimate for month m1m group h1, and employment status y1 and month in sample estimate for month m2, group h2, and status y2"
+  Sigmas<-plyr::aaply(misestimates,4,function(x){
+    Sigma=array(var(array(x,
+                          c(dim(x)[1],prod(dim(x)[2:4])))),
+                rep(dim(x)[2:4],2))
+    dimnames(Sigma)<-rep(dimnames(x)[2:4],2)
+    names(dimnames(Sigma))<-paste0(names(dimnames(Sigma)),rep(1:2,each=3))
+    Sigma},.progress="text")
+  Hmisc::label(Sigmas)<-"array: for population s, covariance between months in sample estimate for month m1m group j1, and employment status y1 and month in sample estimate for month m2, group j2, and status y2"
   save(Sigmas,file=file.path(resultsfolder ,"Simu_Sigmas.rda"))
   rm(misestimates,Sigmas);gc()}
 
 #3.4. Computation of coefficients for Best linear estimates (Yansaneh fuller)
 if(!file.exists(file.path(resultsfolder,"Simu_Sigmas.rda"))){
-  load(file.path(resultsfolder ,"Simu_Sigmas.rda"))
-  YF_weights<-plyr::aaply(Sigmas,
-                          match(c("s","b"),names(dimnames(Sigmas))),
-                          function(Sigma){
-    CompositeRegressionEstimation::CoeffYF(Sigma)},.progress="text")
+  load(file.path(resultsfolder ,"Sigmas.rda"))
+  YF_weights<-plyr::aaply(Sigmas,1,function(Sigma){CompositeRegressionEstimation::CoeffYF(Sigma)},.progress="text")
   names(dimnames(YF_weights)[[1]])<-dimnames(YF_weights)[[1]]
   save(YF_weights,file=file.path(resultsfolder ,"Simu_YF_weights.rda"))
   rm(YF_weights,Sigmas,Sigmas);gc()}
@@ -344,7 +340,7 @@ if(!file.exists(file.path(resultsfolder,"Simu_Sigmahat.rda"))){
   load(file.path(resultsfolder ,"Simu_MMisestimates.rda"))
   load(file.path(resultsfolder ,"Simu_coeffAK3.rda"))
   #compute weights
-  plyr::laply(coeffAK3hat,function(x){CPS_AK_coeff.array.f(85,x)})
+  plyr::laply(coeffAK3hat,function(x){CPS_AK_coeff.array.f(85,x)})})
 #compute estimates
 AKcomprep<-TensorDB::"%.%"(Ak3weightshat,Misestimates,
                            I_A=list(c=c("s"),n=c("c","y2","m2"),p=c( "y1", "h1", "m1")),
@@ -365,7 +361,7 @@ Hmisc::label(MSE_MR)<-"array of MSE of MR estimate of y in synthetic population 
 save(MSE_MR,file=file.path(resultsfolder ,"Simu_MSE_MR.rda"))
 
 rm(MSE_MR,MRRcompbias,MRRcompb0MRRcomp,MRRcomp);gc()
-
+}
 
 
 

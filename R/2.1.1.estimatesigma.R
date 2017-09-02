@@ -1,3 +1,36 @@
+#' Adds unemployment rate to an array
+#' 
+#' @param A  a_1 x ... x a_p
+#' @param dime an integer or a string indicating the dimention of the array that corresponds to the employed and unemployed
+#' @return uenames, a character string indicating the dimension names corresponding to employed,unemployed and rate( will be created)
+#' @examples
+#' A=array(1:(prod(2:6)),2:6);dimnames(A)<-list(s=1:2,m=1:3,y=c("1","0","_1","r"),e=1:5,i=1:6);
+#' i1=1:3;i2=4:5;varX(A,i1,i2)
+
+varX<-function(A,i1,i2=setdiff(1:length(dim(A)),i1)){
+  B<-array(var(array(aperm(A,c(i1,i2)),c(prod(dim(A)[i1]),prod(dim(A)[i2])))),rep(dim(A)[i2],2),rep(dimnames(A)[i2],2))
+  names(dimnames(B))<-paste0(rep(names(dimnames(A)[i2]),2),rep(1:2, each=length(i2)))
+  B
+}
+
+varA<-function(A,varyingindex,variableindex,fixindex=NULL){
+  if(!is.numeric(fixindex)&!is.null(fixindex)){i0<-match(fixindex,names(dimnames(A)))}
+  i_0<-setdiff(1:length(dim(A)),i0)
+  if(!is.numeric(varyingindex)){i1<-match(varyingindex,names(dimnames(A))[i_0])}
+  if(!is.numeric(variableindex)){i2<-match(variableindex,names(dimnames(A))[i_0])}
+  if(!is.null(fixindex)){
+    plyr::aaply(A,
+                i0,
+                varX,
+                i1=i1,
+                i2=i2)
+  }else{varX(A,i1,i2)}}
+
+
+
+
+
+
 tablesAf<-function(s,i,m,b,syntheticcpspops,BB){
   A=syntheticcpspops[[s]][[m]][samplerule(i,1:800,m),"pumlrR"]
   if(b=="true"){
@@ -10,12 +43,7 @@ tablesAf<-function(s,i,m,b,syntheticcpspops,BB){
   A}
 
 tablesAf2<-function(s,i,b,syntheticcpspops,BB){
-  A=syntheticcpspops[[s]][[m]][samplerule(i,1:100,1),"pumlrR"]
-  if(b=="true"){
-    if(BB[i,1,1,s,1]>0){
-      x=(701:800)[A[701:800]=="1"][1:BB[i,1,1,s,1]]
-      A[x]<-"0"}
-  }
+  A=syntheticcpspopsA[s,m,sampleruleS(i),y,b]
   A<-model.matrix(~A+0,data.frame(A=A))
   colnames(A)<-gsub("A","",colnames(A))
   A}
@@ -66,10 +94,9 @@ estimatesigma<-function(s,i,m1,m2,b,syntheticcpspops,BB){
   sigma2}
 
 
-estimatesigma2<-function(s,i,lag,b,syntheticcpspops,BB){
+estimatesigma2<-function(s,i,lag,b,syntheticcpspopsA,){
   sigma2<-array(0,c(3,3))
   if(is.element(abs(m1-m2),c(0,1,2,3,9,10,11,12,13,14,15))){
-    x<-deltalist(m1,m2)
     y<-abind(m1=tablesAf(s,i,m1,b,syntheticcpspops,BB)[x[,1],],m2=tablesAf(s,i,m2,b,syntheticcpspops,BB)[x[,2],],along=3)
     mm<-plyr::aaply(y,2:3,mean);
     x<-plyr::aaply(y,1,function(z){z-mm})
