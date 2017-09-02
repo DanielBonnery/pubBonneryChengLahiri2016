@@ -94,7 +94,7 @@ estimatesigma<-function(s,i,m1,m2,b,syntheticcpspops,BB){
   sigma2}
 
 
-estimatesigma2<-function(s,i,lag,b,syntheticcpspopsA,){
+estimatesigma2<-function(s,i,lag,b,syntheticcpspopsA){
   sigma2<-array(0,c(3,3))
   if(is.element(abs(m1-m2),c(0,1,2,3,9,10,11,12,13,14,15))){
     y<-abind(m1=tablesAf(s,i,m1,b,syntheticcpspops,BB)[x[,1],],m2=tablesAf(s,i,m2,b,syntheticcpspops,BB)[x[,2],],along=3)
