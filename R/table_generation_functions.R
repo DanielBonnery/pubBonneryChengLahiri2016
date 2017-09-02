@@ -9,6 +9,11 @@
 samplerule<-function(i,j,m){((5*(m-1)+
                                 5*(i-1)+
                                 5000*((j-1)%/%5)+((j-1)%%5)+5*((j-1)%/%100)+40*((j-1)%/%400)))%%100000+1}
+
+sampleruleS<-function(i){samplerule(i,1:100,1)}
+sampleruleS<-function(i){((5*(i-1)+5000*((0:99)%/%5)+((0:99)%%5)+5*((0:99)%/%100)))%%100000+1}
+samplerule2<-function(i,m){c(sapply((m+i-2)+c(1:4,13:16),sampleruleS))}
+#' identical(samplerule2(1,1),samplerule(1,1:800,1))
 sampleruleH<-function(i,j,m){(((m-1)+
                                 (i-1)+
                                 1000*((j-1))+((j-1)%/%20)+8*((j-1)%/%80)))%%20000+1}
@@ -111,6 +116,10 @@ syntheticcpsdataset<-
 
 pumlrR <- function(i){replace(x<-as.character(-1+2*is.element(i,c("1","2"))+is.element(i,as.character(3:4))),x=="-1","_1")}
  
+
+
+
+
 #This function modify the dataframes of the list list.tables
 #and returns a list of modified tables
 
@@ -169,6 +178,13 @@ Chargetables <- function(list.tables){
 #This function modify the dataframes of the list list.tablespop
 #and returns a list of modified tables
 
+syntheticcpspopsbf<-function(syntheticcpspops){
+  plyr::llply(syntheticcpspops,function(l){
+    plyr::llply(l,function(ll){
+      ll[["pumlrR"]][sample((1:nrow(ll))[ll$"pumlrR"=="1"],ceiling(0.2*sum(ll$"pumlrR"=="1")))]<-"0"
+      ll
+    })
+  })}
 
 Chargetablespop <- function(list.tablespop){
   L<-mclapply(list.tablespop,
@@ -196,12 +212,10 @@ Chargetablespop <- function(list.tablespop){
   names(L)<-names(list.tablespop)
   return(L)}
 
-ChargetablespopA<-function(){
-  load(paste0(tablesfolder,"/list.tablespop.Rdata"))
-  tablespopA<-do.call(abind,c(lapply(list.tablespop,function(l){
-    model.matrix(~0+pumlrR,l)}),list(along=3)))  
-  save(tablespopA,file=paste0(tablesfolder,"/tablespopA.Rdata"))
-}
+ChargetablespopA<-function(list.tablespop){
+  plyr::laply(list.tablespop,
+              function(l){
+                model.matrix(~0+pumlrR,l)})}
 
 syntheticccpspopHAf<-function(list.tablespop){
   list.tablespopA<-

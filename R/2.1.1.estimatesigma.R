@@ -9,6 +9,20 @@ tablesAf<-function(s,i,m,b,syntheticcpspops,BB){
   colnames(A)<-gsub("A","",colnames(A))
   A}
 
+tablesAf2<-function(s,i,b,syntheticcpspops,BB){
+  A=syntheticcpspops[[s]][[m]][samplerule(i,1:100,1),"pumlrR"]
+  if(b=="true"){
+    if(BB[i,1,1,s,1]>0){
+      x=(701:800)[A[701:800]=="1"][1:BB[i,1,1,s,1]]
+      A[x]<-"0"}
+  }
+  A<-model.matrix(~A+0,data.frame(A=A))
+  colnames(A)<-gsub("A","",colnames(A))
+  A}
+
+
+
+
 #' tablesAf(1,1,1,"false",syntheticcpspops,BB)
 
 
@@ -52,6 +66,20 @@ estimatesigma<-function(s,i,m1,m2,b,syntheticcpspops,BB){
   sigma2}
 
 
+estimatesigma2<-function(s,i,lag,b,syntheticcpspops,BB){
+  sigma2<-array(0,c(3,3))
+  if(is.element(abs(m1-m2),c(0,1,2,3,9,10,11,12,13,14,15))){
+    x<-deltalist(m1,m2)
+    y<-abind(m1=tablesAf(s,i,m1,b,syntheticcpspops,BB)[x[,1],],m2=tablesAf(s,i,m2,b,syntheticcpspops,BB)[x[,2],],along=3)
+    mm<-plyr::aaply(y,2:3,mean);
+    x<-plyr::aaply(y,1,function(z){z-mm})
+    sigma2<-t(x[,,1])%*%x[,,2]/(dim(x)[3]-1)}
+  dimnames(sigma2)<-list("y1"=c("0"  ,"1",  "_1"),"y2"=c("0"  ,"1",  "_1"))
+  sigma2}
+
+
+
+
 multsigmaAf<-function(m1,m2,n=100,N=100000){
   FUN<-function(r1,r2){
     -N+(delta(m1,r1)==delta(m2,r2))*(N+((1-(n/8)/N)*N^2/(n/8)))}
@@ -68,11 +96,8 @@ estimateSigma<-function(adde2){
   eval(parse(text=Sauve("sigma2hatA",adde2)))
 }
 
-
-
 multsigmaAf<-function(m1,m2,n=100,N=100000){
-  FUN<-function(r1,r2){
-    -N+(delta(m1,r1)==delta(m2,r2))*(N+((1-(n/8)/N)*N^2/(n/8)))}
+  FUN<-function(r1,r2){-N+(delta(m1,r1)==delta(m2,r2))*(N+((1-(n/8)/N)*N^2/(n/8)))}
   outer(X = 1:8,1:8,FUN)
 }
 
