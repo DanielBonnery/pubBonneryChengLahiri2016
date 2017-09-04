@@ -156,11 +156,12 @@ if(!file.exists(file.path(resultsfolder,"Simu_Sigmas.rda"))){
 #3.4. Computation of coefficients for Best linear estimates (Yansaneh fuller)
 if(!file.exists(file.path(resultsfolder,"Simu_Sigmas.rda"))){
   load(file.path(resultsfolder ,"Simu_Sigmas.rda"))
-  YF_weights<-plyr::aaply(Sigmas,
-                          match(c("s","b"),names(dimnames(Sigmas))),
+  YF_weights<-plyr::aaply(Sigmas[,1,,,,,,],
+                          match(c("s"),names(dimnames(Sigmas)[-2])),
                           function(Sigma){
     CompositeRegressionEstimation::CoeffYF(Sigma)},.progress="text")
-  names(dimnames(YF_weights)[[1]])<-dimnames(YF_weights)[[1]]
+  YF_weights<-array(YF_weights,c(dim(YF_weights)[1],85,3,85,8,3),
+                    c(dimnames(YF_weights)[1],list("m"=1:85,"y"=c("0","1","_1"),"m1"=1:85,"h1"=1:8,"y1"=c("0","1","_1"))))
   save(YF_weights,file=file.path(resultsfolder ,"Simu_YF_weights.rda"))
   rm(YF_weights,Sigmas,Sigmas);gc()}
 
@@ -175,7 +176,7 @@ if(!file.exists(file.path(resultsfolder,"Simu_coeffAK3.rda"))){
   coeffAK3<-cbind(coeffAK3, CPSmethod=rep(list(numeric(6)),3))
   coeffAK3[[1,4]]<-coeffAK3[[2,4]]<-coeffAK3[[3,4]]<-CPS_AK()
   save(coeffAK3,file=file.path(resultsfolder ,"Simu_coeffAK3.rda"))
-  rm(coeffAK3s,Sigmas);gc()}
+  rm(Sigmas,Populationtotals,coeffAK3s,Sigmas);gc()}
 
 #3.6. Computation of coefficients Best AK constrained estimator
 if(!file.exists(file.path(resultsfolder,"Simu_coeffAK3sconstraint.rda"))){
@@ -187,13 +188,17 @@ if(!file.exists(file.path(resultsfolder,"Simu_coeffAK3sconstraint.rda"))){
 #3.7. Computation of YF linear estimators
 if(!file.exists(file.path(resultsfolder,"Simu_YFcomprep.rda"))){
   load(file.path(resultsfolder ,"Simu_misestimates.rda"))
+  load(file.path(resultsfolder ,"Simu_Populationtotals.rda"))
   load(file.path(resultsfolder ,"Simu_YF_weights.rda"))
-  YFcomprep<-plyr::aaply(dimnames(YF_weights)[[1]],1, function(i){
-    plyr::aaply(misestimates[,,,i,],1,function(X){
-      array(YF_weights[i,,]%*%c(X),c(3,dim(YF_weights)[2]/3))})
-  })
-  dimnames(YFcomprep)[3:4]<-dimnames(Sigmas)[c(4,2)]
-  names(dimnames(YFcomprep))<-c("s","i","y","m")
+  dimnames(misestimates)<-lapply(dimnames(misestimates),function(x){1:length(x)})
+  YFcomprep<-TensorDB::"%.%"(YF_weights,misestimates,
+                             I_A=list(c="s",n=c("y","m"),p=c( "y1", "h1", "m1")),
+                             I_B=list(c="s",p=c("y","h","m"),q=c("i","b")))
+  
+  #YFcomprep<-plyr::daply(as.data.frame(dimnames(YF_weights)[c("s","b")]),~s+b, function(d){
+  #  plyr::aaply(misestimates[,,,d$s,,d$b],1,function(X){
+  #    array(YF_weights[d$s,,]%*%c(X),c(3,dim(YF_weights)[2]/3))})
+  #})
   YFcomprep<-addUtoarray(YFcomprep)
   YFcomprep<-adddifftoarray(YFcomprep)
   Hmisc::label(YFcomprep)<-"YF Estimate for month m, variable y, seed i, population s"
@@ -207,16 +212,16 @@ if(!file.exists(file.path(resultsfolder,"Simu_YFcomprep.rda"))){
 
 #3.8. Computation of AK linear estimators
 if(!file.exists(file.path(resultsfolder,"Simu_AKcomprep.rda"))){
-  load(file.path(resultsfolder ,"Simu_MMisestimates.rda"))
+  load(file.path(resultsfolder ,"Simu_misestimates.rda"))
   load(file.path(resultsfolder ,"Simu_coeffAK3.rda"))
   #compute weights
   AK3_weights<-
     plyr::aaply(coeffAK3,1:2,function(x){
-      CPS_AK_coeff.array.f(dim(Misestimates)[match("m",names(dimnames(Misestimates)))],x,simplify=FALSE)})
+      CPS_AK_coeff.array.f(dim(misestimates)[match("m",names(dimnames(misestimates)))],x,simplify=FALSE)})
   #compute estimates
-  AKcomprep<-TensorDB::"%.%"(AK3_weights,Misestimates,
-                             I_A=list(c=c("s"),n=c("c","y2","m2"),p=c( "y1", "mis1", "m1")),
-                             I_B=list(c="s",p=c("y","j","m"),q=c("i","b")))
+  AKcomprep<-TensorDB::"%.%"(AK3_weights,misestimates,
+                             I_A=list(c=c("s"),n=c("c","y2","m2"),p=c( "y1", "h1", "m1")),
+                             I_B=list(c="s",p=c("y","h","m"),q=c("i","b")))
   
   names(dimnames(AKcomprep))[match(c("y2","m2"),names(dimnames(AKcomprep)))]<-c("y","m")
   AKcomprep<-pubBonneryChengLahiri2016::addUtoarray(AKcomprep)
@@ -247,10 +252,10 @@ if(!file.exists(file.path(resultsfolder,"Simu_MRRcompb0.rda"))){
   hrmis=as.factor(rep(8:1,each=100))
   un=rep(1,800)
   
-  MRRcomp<-plyr::aaply(popnums,1,function(popnum){
+  MRRcomp<-plyr::aaply(popnums,1,function(s){
     plyr::aaply(1:1000,1,function(i){
-      list.tables<-lapply(1:85,function(j){    
-        cbind(syntheticcpspops[[popnum]][[j]][samplerule(i,1:800,j),],hrmis,un)})
+      list.tables<-lapply(1:85,function(m){    
+        cbind(syntheticcpspops[[s]][[m]][samplerule(i,1:800,m),-match("pumlrRlag",names(syntheticcpspops[[s]][[m]]))],hrmis,un)})
       names(list.tables)<-names(syntheticcpspops[[1]])
       #MRR
       mrr<-CompositeRegressionEstimation::MR(list.tables=list.tables, w="pwsswgt", id=c("hrlongid",  "pulineno"), 
