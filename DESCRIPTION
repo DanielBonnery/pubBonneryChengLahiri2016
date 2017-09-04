@@ -25,8 +25,8 @@ Depends: ggplot2,
 	MASS,
 	filehash,
 	plyr,
-	TensorDB,
-	sampling
+	CompositeRegressionEstimation,
+	TensorDB
 License: GPL (>= 2)
 LazyLoad: yes
 LazyData: true

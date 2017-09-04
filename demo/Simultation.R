@@ -255,7 +255,7 @@ if(!file.exists(file.path(resultsfolder,"Simu_MRRcompb0.rda"))){
   MRRcomp<-plyr::aaply(popnums,1,function(s){
     plyr::aaply(1:1000,1,function(i){
       list.tables<-lapply(1:85,function(m){    
-        cbind(syntheticcpspops[[s]][[m]][samplerule(i,1:800,m),-match("pumlrRlag",names(syntheticcpspops[[s]][[m]]))],hrmis,un)})
+        cbind(syntheticcpspops[[s]][[m]][samplerule(i,1:800,m),-match("pumlrRlag",)],hrmis,un)})
       names(list.tables)<-names(syntheticcpspops[[1]])
       #MRR
       mrr<-CompositeRegressionEstimation::MR(list.tables=list.tables, w="pwsswgt", id=c("hrlongid",  "pulineno"), 
