@@ -255,7 +255,7 @@ if(!file.exists(file.path(resultsfolder,"Simu_MRRcompb0.rda"))){
   MRRcomp<-plyr::aaply(popnums,1,function(s){
     plyr::aaply(1:1000,1,function(i){
       list.tables<-lapply(1:85,function(m){    
-        cbind(syntheticcpspops[[s]][[m]][samplerule(i,1:800,m),-match("pumlrRlag",)],hrmis,un)})
+        cbind(syntheticcpspops[[s]][[m]][samplerule(i,1:800,m),-match("pumlrRlag",syntheticcpspops[[s]][[m]])],hrmis,un)})
       names(list.tables)<-names(syntheticcpspops[[1]])
       #MRR
       mrr<-CompositeRegressionEstimation::MR(list.tables=list.tables, w="pwsswgt", id=c("hrlongid",  "pulineno"), 
@@ -278,19 +278,18 @@ if(!file.exists(file.path(resultsfolder,"Simu_MRRcompbias.rda"))){
   load(file.path(resultsfolder,"Simu_BB.rda"))
   
   
-  MRRcompbias<-plyr::aaply(popnums,1,function(popnum){
+  MRRcompbias<-plyr::aaply(popnums,1,function(s){
     plyr::aaply(1:1000,1,function(i){
       list.tables<-plyr::alply(1:85,1,function(m){
-        ll<-cbind(syntheticcpspops[[popnum]][[m]][samplerule(i,1:800,m),],hrmis,un)
-        x=sample((701:800)[ll[["pumlrR"]][701:800]=="1"],BB[i,m,1,popnum,1])
-        ll[["pumlrR"]][x]<-"0"
-        ll})
+        cbind(rbind(syntheticcpspops[[s]][[m]][samplerule(i,1:700,m),],
+                        syntheticcpspopsb[[s]][[m]][samplerule(i,701:800,m),]),hrmis,un)})
       names(list.tables)<-names(syntheticcpspops[[1]])
       #all(replicate(50,(function(){i=sample(1000,1);m=sample(85,1);popnum=sample(3,1);misestimates[i,m,1,popnum,1]/1000==table(cbind(syntheticcpspops[[popnum]][[m]][samplerule(i,1:800,m),],hrmis,un)[701:800,]$pumlrR)[["0"]]})()))
       #MRR
       mrr<-CompositeRegressionEstimation::MR(list.tables=list.tables, w="pwsswgt", id=c("hrlongid",  "pulineno"), 
                                              list.xMR="pumlrR", list.x1="un", list.x2=NULL,list.y="pumlrR", 
-                                             list.dft.x2=NULL,Alpha=seq(0,1,length.out=21),theta=3/4)$dfEst},
+                                             list.dft.x2=NULL,Alpha=seq(0,1,length.out=21),theta=3/4)$dfEst
+      },
       .progress = "text")})
   dimnames(MRRcompbias)[[1]]<-popnums
   names(dimnames(MRRcompbias))[1:2]<-c("population","seed")
