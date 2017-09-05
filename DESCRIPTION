@@ -1,8 +1,8 @@
-Package: CompositeRegressionEstimation
+Package: pubBonneryChengLahiri2016
 Type: Package
 Title: X
 Version: 1.0 
-Date: 2017-09-03
+Date: 2017-09-04
 Author: D. Bonnery
 Maintainer: D. Bonnery  <dbonnery@umd.edu>
 Imports: ggplot2,
@@ -11,17 +11,22 @@ Imports: ggplot2,
 	Matrix,
 	Hmisc,
 	MASS,
-	filehash
+	filehash,
+	plyr
 Suggests: 
 Description: Data
-Remotes: DanielBonnery/TensorDB
-Depends: TensorDB,
-	sampling,
+Remotes: DanielBonnery/CompositeRegressionEstimation,
+	DanielBonnery/TensorDB
+Depends: ggplot2,
 	abind,
 	optimx,
+	Matrix,
 	Hmisc,
 	MASS,
-	filehash
+	filehash,
+	plyr,
+	CompositeRegressionEstimation,
+	TensorDB
 License: GPL (>= 2)
 LazyLoad: yes
 LazyData: true
