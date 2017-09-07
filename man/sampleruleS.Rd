@@ -4,7 +4,7 @@
 \alias{sampleruleS}
 \title{Return atomic rotation group 1 for seed i (1000 possible values)}
 \usage{
-sampleruleS(i)
+sampleruleS(i0)
 }
 \arguments{
 \item{i}{An integer between 1 and 1000}
@@ -17,6 +17,11 @@ Return atomic rotation group 1 for seed i (1000 possible values)
 }
 \examples{
 sampleruleS(1,1:160,1)
-identical(sampleruleS(i),samplerule(i,1:100,1))
+identical(sampleruleS(i0=1),samplerule(i=1,j=1:100,m=1))
+identical(sampleruleS(i0=16),samplerule(i=1,1:100,m=16))
+
+(checkrule<-function(){
+i=sample(1:1000,1);m=sample(1:85,1);h=sample(1:8,1);
+return(list(i=i,m=m,h=h,check=identical(sampleruleS(i0=i+(m-1)+c(0:3,12:15)[9-h]),samplerule(i,(8-h)*100+(1:100),m))))})()
 identical((function(i,m){c(sapply((m+i-2)+c(1:4,13:16),sampleruleS))})(1,1),samplerule(1,1:800,1))
 }

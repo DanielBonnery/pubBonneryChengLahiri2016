@@ -42,11 +42,7 @@ tablesAf<-function(s,i,m,b,syntheticcpspops,BB){
   colnames(A)<-gsub("A","",colnames(A))
   A}
 
-tablesAf2<-function(s,i,b,syntheticcpspops,BB){
-  A=syntheticcpspopsA[s,m,sampleruleS(i),y,b]
-  A<-model.matrix(~A+0,data.frame(A=A))
-  colnames(A)<-gsub("A","",colnames(A))
-  A}
+
 
 
 
@@ -58,17 +54,17 @@ tablesAf2<-function(s,i,b,syntheticcpspops,BB){
 deltalist<-function(m1,m2){
   diff=abs(m1-m2)
   x=cbind(numeric(0),numeric(0))
-  if(diff== 0){x=cbind(     1:160         ,1:160)}
-  if(diff== 1){x=cbind(c(21:80,101:160),c(1:60,81:140))}
-  if(diff== 2){x=cbind(c(41:80,121:160),c(1:40,81:120))}
-  if(diff== 3){x=cbind(c(61:80,141:160),c(1:20,81:100))}
-  if(diff== 9){x=cbind(81:100,61:80)}
-  if(diff==10){x=cbind(81:120,41:80)}
-  if(diff==11){x=cbind(81:140,21:80)}
-  if(diff==12){x=cbind(81:160,  1:80)}
-  if(diff==13){x=cbind(101:160,  1:60)}
-  if(diff==14){x=cbind(121:160,  1:40)}
-  if(diff==15){x=cbind(141:160,  1:20)}
+  if(diff== 0){x=cbind(c(8:5,4:1),c(8:5,4:1))}
+  if(diff== 1){x=cbind(c(7:5,3:1),c(8:6,4:2))}
+  if(diff== 2){x=cbind(c(6:5,2:1),c(8:7,4:3))}
+  if(diff== 3){x=cbind(c(5:5,1:1),c(8:8,4:4))}
+  if(diff== 9){x=cbind(4:4,5:5)}
+  if(diff==10){x=cbind(4:3,6:5)}
+  if(diff==11){x=cbind(4:2,7:5)}
+  if(diff==12){x=cbind(4:1,8:5)}
+  if(diff==13){x=cbind(3:1,8:6)}
+  if(diff==14){x=cbind(2:1,8:7)}
+  if(diff==15){x=cbind(1:1,8:8)}
   if(m1>m2){x=x[,c(2,1)]}
   x}
 
@@ -79,29 +75,30 @@ delta(12,3);
 delta(12,4);
 delta(12,5);
 
-
+tableA3f<-function(s,i,m,b,x,syntheticcpspopsHA){
+  rbind(syntheticcpspopsHA[s,m,,b      ,sampleruleH(i,intersect(1,x),m)],
+        syntheticcpspopsHA[s,m,,"false",sampleruleH(i,setdiff  (x,1),m)])}
 
 #' estimatesigma(1,1,1,2,"false",syntheticcpspops,BB)
-estimatesigma<-function(s,i,m1,m2,b,syntheticcpspops,BB){
+estimatesigma<-function(s,i,m1,m2,b,syntheticcpspopsHA){
   sigma2<-array(0,c(3,3))
   if(is.element(abs(m1-m2),c(0,1,2,3,9,10,11,12,13,14,15))){
     x<-deltalist(m1,m2)
-    y<-abind(m1=tablesAf(s,i,m1,b,syntheticcpspops,BB)[x[,1],],m2=tablesAf(s,i,m2,b,syntheticcpspops,BB)[x[,2],],along=3)
-    mm<-plyr::aaply(y,2:3,mean);
-    x<-plyr::aaply(y,1,function(z){z-mm})
-    sigma2<-t(x[,,1])%*%x[,,2]/(dim(x)[3]-1)}
-  dimnames(sigma2)<-list("y1"=c("0"  ,"1",  "_1"),"y2"=c("0"  ,"1",  "_1"))
+    sigma2<-var(m1=tableA3f(s,i,m1,b,x[,1]),
+                m2=tableA3f(s,i,m2,b,x[,2]))}
+  names(dimnames(sigma2))<-c("y1","y2")
   sigma2}
 
 
-estimatesigma2<-function(s,i,lag,b,syntheticcpspopsA){
-  sigma2<-array(0,c(3,3))
-  if(is.element(abs(m1-m2),c(0,1,2,3,9,10,11,12,13,14,15))){
-    y<-abind(m1=tablesAf(s,i,m1,b,syntheticcpspops,BB)[x[,1],],m2=tablesAf(s,i,m2,b,syntheticcpspops,BB)[x[,2],],along=3)
-    mm<-plyr::aaply(y,2:3,mean);
-    x<-plyr::aaply(y,1,function(z){z-mm})
-    sigma2<-t(x[,,1])%*%x[,,2]/(dim(x)[3]-1)}
-  dimnames(sigma2)<-list("y1"=c("0"  ,"1",  "_1"),"y2"=c("0"  ,"1",  "_1"))
+
+
+tablesAf2<-function(s,m,i,b,syntheticcpspopsA){
+  syntheticcpspopsA[s,m,sampleruleS(i),,b]}
+
+estimatesigma2<-function(s,i0,m,lag,b,syntheticcpspopsA){
+  sigma2<-var(tablesAf2(s,m,i0,b,syntheticcpspopsA),
+              tablesAf2(s,m+lag,i0,if(lag==0){b}else{"false"},syntheticcpspopsA))
+  names(dimnames(sigma2))<-c("y1","y2")
   sigma2}
 
 

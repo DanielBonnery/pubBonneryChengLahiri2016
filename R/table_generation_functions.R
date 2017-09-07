@@ -15,13 +15,23 @@ samplerule<-function(i,j,m){((5*(m-1)+
 #' @return The atomic rotation group 1 for seed i 
 #' @examples
 #' sampleruleS(1,1:160,1)
-#' identical(sampleruleS(i),samplerule(i,1:100,1))
+#' identical(sampleruleS(i0=1),samplerule(i=1,j=1:100,m=1))
+#' identical(sampleruleS(i0=16),samplerule(i=1,1:100,m=16))
+#' 
+#' (checkrule<-function(){
+#' i=sample(1:1000,1);m=sample(1:85,1);h=sample(1:8,1);
+#' return(list(i=i,m=m,h=h,check=identical(sampleruleS(i0=i+(m-1)+c(0:3,12:15)[9-h]),samplerule(i,(8-h)*100+(1:100),m))))})()
 #' identical((function(i,m){c(sapply((m+i-2)+c(1:4,13:16),sampleruleS))})(1,1),samplerule(1,1:800,1))
-sampleruleS<-function(i){((5*(i-1)+5000*((0:99)%/%5)+((0:99)%%5)+5*((0:99)%/%100)))%%100000+1}
+sampleruleS<-function(i0){((5*(i0-1)+5000*((0:99)%/%5)+((0:99)%%5)+5*((0:99)%/%100)))%%100000+1}
 
-sampleruleH<-function(i,j,m){(((m-1)+
-                                (i-1)+
-                                1000*((j-1))+((j-1)%/%20)+8*((j-1)%/%80)))%%20000+1}
+sampleruleH<-
+  function(i,h,m){
+    j=c(outer((8-h)*100,(1:100),"+"));
+    (((m-1)+
+        (i-1)+
+        1000*((j-1))+((j-1)%/%20)+8*((j-1)%/%80)))%%20000+1}
+sampleruleR<-function(i,h,m){sampleruleS(i0=i+(m-1)+c(0:3,12:15)[9-h])}
+
 
 misH<-function(i,m,misi,syntheticcpspopsHA){plyr::aaply(syntheticcpspopsHA[,sampleruleH(i,(8-misi)*20+(1:20),m),,m],c(1,3),sum)}
 mis<-function(i,m,misi,syntheticcpspopsA){plyr::aaply(syntheticcpspopsA[,samplerule(i,(8-misi)*100+(1:100),m),,m],c(1,3),sum)}

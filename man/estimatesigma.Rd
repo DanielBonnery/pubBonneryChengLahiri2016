@@ -4,7 +4,7 @@
 \alias{estimatesigma}
 \title{estimatesigma(1,1,1,2,"false",syntheticcpspops,BB)}
 \usage{
-estimatesigma(s, i, m1, m2, b, syntheticcpspops, BB)
+estimatesigma(s, i, m1, m2, b, syntheticcpspopsHA)
 }
 \description{
 estimatesigma(1,1,1,2,"false",syntheticcpspops,BB)
