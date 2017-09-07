@@ -85,8 +85,8 @@ if(!file.exists(file.path(resultsfolder,"Simu_syntheticcpspopsA.rda"))){
   save(syntheticcpspopsA,file=file.path(resultsfolder,"Simu_syntheticcpspopsA.rda"))
   syntheticcpspopsHA<-plyr::aaply(syntheticcpspopsA,c(1:2,4:5),function(x){colSums(matrix(x, nrow=5))})
   rm(syntheticcpspopsA);gc()
-  save(syntheticcpspopsHA,file=file.path(resultsfolder,"Simu_syntheticcpspopsHA.rda"))
   names(dimnames(syntheticcpspopsHA))[5]<-"h"
+  save(syntheticcpspopsHA,file=file.path(resultsfolder,"Simu_syntheticcpspopsHA.rda"))
   rm(syntheticcpspopsHA);gc()
 }
 
@@ -297,54 +297,56 @@ if(!file.exists(file.path(resultsfolder,"Simu_MRRcomp.rda"))){
 
 #3.9.Estimate Sigma
 if(!file.exists(file.path(resultsfolder,"Simu_Sigmahat.rda"))){
-  load(file.path(resultsfolder ,"Simu_syntheticcpspopsA.rda"))
+  load(file.path(resultsfolder ,"Simu_syntheticcpspopsHA.rda"))
   load(file.path(resultsfolder ,"Simu_Sigmas.rda"))
   dd<-dimnames(Sigmas);rm(Sigmas);gc()
   allcor<-do.call(expand.grid,
-                  list(m=1:85,
-                  lag=c(0,1,2,3,9,10,11,12,13,14,15),
+                  list(m1=1:85,
+                  m2=1:85,
                   stringsAsFactors=FALSE))
   all_i_s_b<-do.call(expand.grid,list(i=1:1000,
-                                      s=dimnames(syntheticcpspopsA)[match("s",names(dimnames(syntheticcpspopsA)))][[1]],
+                                      s=dimnames(syntheticcpspopsHA)[match("s",names(dimnames(syntheticcpspopsHA)))][[1]],
                                       b=c("true","false"),
                                       stringsAsFactors=FALSE))
   Sigmahat<-plyr::daply(all_i_s_b,
                         ~i+s+b,
                         function(d){
                           gc();
-                          plyr::daply(allcor,~m+lag,function(d2){
-                            if(d2$m+d2$lag<=85){
-                            estimatesigma2(d$s,d$i,d2$m,d2$lag,d$b,syntheticcpspopsA)}else{matrix(NA,3,3)}
+                          plyr::daply(allcor,~m1+m2,function(d2){
+                            estimatesigma(d$s,d$i,d2$m1,d2$m2,d$b,syntheticcpspopsHA)
                           })
                           },.progress = "text")
   save(Sigmahat,file.path(resultsfolder,"Simu_Sigmahat.rda"))
+  rm(Sigmahat,syntheticcpspopsHA,all_i_s_b,allcor);gc()
+  }
+
+if(!file.exists(file.path(resultsfolder,"Simu_Sigmahat.rda"))){
   
   load(file.path(resultsfolder,"Simu_Populationtotals.rda"))
   SigmahatH=Sigmahatf(Sigmahat)
   coeffAK3hat<-CompositeRegressionEstimation::bestAK3(SigmahatH,t(Populationtotals[d$s,,]))
-  load(file.path(resultsfolder ,"Simu_MMisestimates.rda"))
+  load(file.path(resultsfolder ,"Simu_misestimates.rda"))
   load(file.path(resultsfolder ,"Simu_coeffAK3.rda"))
   #compute weights
-  plyr::laply(coeffAK3hat,function(x){CPS_AK_coeff.array.f(85,x)})
+  Ak3weightshat<-  plyr::laply(coeffAK3hat,function(x){CPS_AK_coeff.array.f(85,x)})
   #compute estimates
-  AKcomprep<-TensorDB::"%.%"(Ak3weightshat,Misestimates,
+  AKhatcomprep<-TensorDB::"%.%"(Ak3weightshat,Misestimates,
                              I_A=list(c=c("s"),n=c("c","y2","m2"),p=c( "y1", "h1", "m1")),
                              I_B=list(c="s",p=c("y","j","m"),q=c("i","b")))
   
-  names(dimnames(AKcomprep))[match(c("y2","m2"),names(dimnames(AKcomprep)))]<-c("y","m")
-  AKcomprep<-pubBonneryChengLahiri2016::addUtoarray(AKcomprep)
-  AKcomprep<-adddifftoarray(AKcomprep)
+  names(dimnames(AKcomprep))[match(c("y2","m2"),names(dimnames(AKhatcomprep)))]<-c("y","m")
+  AKhatcomprep<-pubBonneryChengLahiri2016::addUtoarray(AKhatcomprep)
+  AKhatcomprep<-adddifftoarray(AKhatcomprep)
   names(dimnames(coeffAK3))<-c("s","c")
-}
 
-names(dimnames(Sigmahat))<-c("i",names(dd),"b")
-Hmisc::label(Sigmahat)<-"Estimate of synthetic population s, seed i, month m, variable y, estimator e, bias b"
-save(MRRcomp,file=file.path(resultsfolder,"Simu_MRRcomp.rda"))
+  MSE_AKhat<-compMSE(MRRcomp,Populationtotals)
+  Hmisc::label(MSE_AKhat)<-"array of MSE of MR estimate of y in synthetic population s and month m  and presence of bias b"
+  save(MSE_AKhat,file=file.path(resultsfolder ,"Simu_MSE_MR.rda"))
+  rm(MSE_AKhat,AKhatcomprep);gc()
 
-MSE_MR<-compMSE(MRRcomp,Populationtotals)
-Hmisc::label(MSE_MR)<-"array of MSE of MR estimate of y in synthetic population s and month m  and presence of bias b"
-save(MSE_MR,file=file.path(resultsfolder ,"Simu_MSE_MR.rda"))
-rm(MSE_MR,MRRcompbias,MRRcompb0MRRcomp,MRRcomp);gc()
+  }
+
+
 
 #4. Compute best alpha.
 load(file.path(resultsfolder ,"Simu_MSE_MR.rda"))

@@ -65,7 +65,7 @@ deltalist<-function(m1,m2){
   if(diff==13){x=cbind(3:1,8:6)}
   if(diff==14){x=cbind(2:1,8:7)}
   if(diff==15){x=cbind(1:1,8:8)}
-  if(m1>m2){x=x[,c(2,1)]}
+  if(m1>m2){x=x[,2:1,drop=FALSE]}
   x}
 
 delta<-function(m,i){m-(i-1+8*(i>4))}
@@ -76,17 +76,20 @@ delta(12,4);
 delta(12,5);
 
 tableA3f<-function(s,i,m,b,x,syntheticcpspopsHA){
-  rbind(syntheticcpspopsHA[s,m,,b      ,sampleruleH(i,intersect(1,x),m)],
-        syntheticcpspopsHA[s,m,,"false",sampleruleH(i,setdiff  (x,1),m)])}
+  t(if(is.element(1,x)){
+  cbind(syntheticcpspopsHA[s,m,,b      ,sampleruleH(i,1             ,m)],
+        syntheticcpspopsHA[s,m,,"false",sampleruleH(i,setdiff  (x,1),m)])}else{
+          syntheticcpspopsHA[s,m,,"false",sampleruleH(i,x,m)]
+        })}
 
 #' estimatesigma(1,1,1,2,"false",syntheticcpspops,BB)
 estimatesigma<-function(s,i,m1,m2,b,syntheticcpspopsHA){
   sigma2<-array(0,c(3,3))
-  if(is.element(abs(m1-m2),c(0,1,2,3,9,10,11,12,13,14,15))){
+  if(is.element(abs(m1-m2),c(0:3,9:15))){
     x<-deltalist(m1,m2)
-    sigma2<-var(m1=tableA3f(s,i,m1,b,x[,1]),
-                m2=tableA3f(s,i,m2,b,x[,2]))}
-  names(dimnames(sigma2))<-c("y1","y2")
+    sigma2<-var(tableA3f(s,i,m1,b,x[,1],syntheticcpspopsHA),
+                tableA3f(s,i,m2,b,x[,2],syntheticcpspopsHA))}
+  #names(dimnames(sigma2))<-c("y1","y2")
   sigma2}
 
 
