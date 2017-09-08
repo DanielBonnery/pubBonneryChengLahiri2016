@@ -1,6 +1,7 @@
 #note that this program takes time. If you plan to shut down your computer before it ends. All results will be stored in this folder, and results alreadu stored will not be re-computed.
 resultsfolder<-if(file.exists("~/R/Data/CPS")){"~/R/Data/CPS"}else{
-  if(is.element("tcltk",installed.packages())){library(tcltk)
+  if(is.element("tcltk",installed.packages())&FALSE){
+    library(tcltk)
     tk_choose.dir(default = "", caption = "Please select a directory where to store results.")}else{getwd()}}
 #1. Load libraries
 library(CompositeRegressionEstimation)
